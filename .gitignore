@@ -1,0 +1,33 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Build / salida
+dist/
+build/
+out/
+.vite/
+*.tsbuildinfo
+
+# Tauri (desktop, futuro)
+src-tauri/target/
+
+# Entorno / secretos
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editores / SO
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Cobertura de tests
+coverage/
