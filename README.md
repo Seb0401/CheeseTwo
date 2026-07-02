@@ -52,7 +52,29 @@ INICIO DE RUN  →  elige ejército inicial + tablero
 
 ## 🚦 Estado actual
 
-**Fase: concepto / pre-producción.** Nada de código todavía. El siguiente paso recomendado está en el [roadmap técnico](docs/07-roadmap-tecnico.md): un prototipo jugable de *un solo combate con Presión* para validar que el bucle es divertido antes de construir toda la economía.
+**Fase: Hito 0 — prototipo del bucle.** Ya hay un prototipo jugable de *un solo Duelo con Presión*: tablero de ajedrez, capturas que generan Presión, meta + límite de turnos y un rival con heurística simple. Es la base para validar que el bucle es divertido antes de construir la economía.
+
+### ▶️ Cómo ejecutarlo
+
+```bash
+npm install
+npm run dev      # servidor de desarrollo (Vite) → abre el link que imprime
+npm test         # tests del motor (Vitest)
+npm run build    # typecheck + build de producción
+```
+
+Juegas con las **blancas**: haz clic en una pieza y luego en una casilla resaltada. Captura para subir la Presión y alcanza la meta antes de que se acaben los turnos.
+
+### 🗂️ Estructura del código
+
+```
+src/
+  engine/   ← motor de reglas: TS PURO, determinista, testeable (sin React ni Pixi)
+  render/   ← capa PixiJS: dibuja el estado del engine, reporta clics
+  ui/       ← componentes React (App + HUD)
+```
+
+> El `engine` no importa nada de `render`/`ui`: esa separación es lo que hará viable añadir tableros, cartas y PvP más adelante. Ver [roadmap técnico](docs/07-roadmap-tecnico.md).
 
 ## ✅ Decisiones tomadas
 
