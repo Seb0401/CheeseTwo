@@ -1,17 +1,19 @@
-import { DuelState } from '../engine';
+import { DuelState, GameDef } from '../engine';
 
 interface HudProps {
+  game: GameDef;
   state: DuelState;
   onRestart: () => void;
+  onExit: () => void;
 }
 
-export function Hud({ state, onRestart }: HudProps) {
+export function Hud({ game, state, onRestart, onExit }: HudProps) {
   const pct = Math.min(100, Math.round((state.pressure / state.target) * 100));
 
   return (
     <aside className="hud">
       <h1>
-        CheeseTwo <span className="sub">— Hito 0</span>
+        CheeseTwo <span className="sub">— {game.name} · Hito 0</span>
       </h1>
 
       <div className="stat">
@@ -40,11 +42,12 @@ export function Hud({ state, onRestart }: HudProps) {
       <button className="restart" onClick={onRestart}>
         Nuevo Duelo
       </button>
+      <button className="exit" onClick={onExit}>
+        Volver al Salón
+      </button>
 
       <p className="hint">
-        Juegas con las <strong>blancas</strong> (abajo). Captura piezas para generar{' '}
-        <strong>Presión</strong> y alcanza la meta antes de que se acaben los turnos. Capturar al
-        rey rival gana el Duelo al instante.
+        Juegas con las <strong>blancas</strong> (abajo). {game.hint}
       </p>
     </aside>
   );

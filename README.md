@@ -1,19 +1,19 @@
-# CheeseTwo — Ajedrez Evolucionado (Working Title)
+# CheeseTwo — Salón de Juegos Roguelike (Working Title)
 
-> Un **ajedrez roguelike**: empiezas jugando ajedrez normal y, run tras run, tu ejército, tus reglas y hasta el tablero evolucionan. Compra piezas, define clases, mejora poderes y combina recursos al estilo *Balatro*.
+> Un **salón de juegos de mesa roguelike** que empieza por el ajedrez: run tras run, tu ejército, tus reglas y hasta el tablero evolucionan. Compra piezas, define clases, mejora poderes y combina recursos al estilo *Balatro* — y desbloquea otros juegos clásicos (damas, ludo…) reinventados con las mismas palancas.
 
 ---
 
 ## 🎯 Visión en una frase
 
-**"Balatro, pero de ajedrez":** cada combate es una partida de ajedrez donde generas *puntaje* capturando y presionando; entre combates gastas los recursos ganados en una tienda para construir un ejército cada vez más roto, con sinergias entre piezas, clases y cartas.
+**"Balatro, pero de juegos de mesa" (el primero: ajedrez):** cada combate es una partida donde generas *puntaje* (Presión) capturando y presionando; entre combates gastas los recursos ganados en una tienda para construir un ejército cada vez más roto, con sinergias entre piezas, clases y cartas. Cada juego clásico es un **modo de run** con su propia fantasía de build y una **colección compartida** (ver [docs/09](docs/09-otros-juegos.md)).
 
 ## 🧭 Pilares de diseño
 
 1. **Evoluciona desde lo familiar.** El primer contacto es ajedrez de verdad (o una versión simplificada como tutorial). La complejidad se *desbloquea*, no se impone.
 2. **El ejército es tuyo.** Compras piezas, las mejoras, defines clases y las llevas de combate en combate dentro de un *run*.
 3. **Sinergias sobre estadísticas.** Como en Balatro, lo divertido no es "+1 de daño" sino combos que rompen las reglas (jokers, clases, poderes que interactúan).
-4. **Rejugabilidad por capas.** Tableros distintos (2D, hexagonal, 3D, multijugador), ejércitos iniciales, y modificadores hacen que ningún run se sienta igual.
+4. **Rejugabilidad por capas.** Tableros distintos (2D, hexagonal, 3D, multijugador), otros juegos como modos (damas, ludo), ejércitos iniciales y modificadores hacen que ningún run se sienta igual.
 5. **Legible primero, profundo después.** Cada capa nueva se introduce sola; nunca se abruma al jugador con todos los sistemas a la vez.
 
 ## 🌀 El bucle central (resumido)
@@ -49,10 +49,16 @@ INICIO DE RUN  →  elige ejército inicial + tablero
 | [docs/06-progresion-meta.md](docs/06-progresion-meta.md) | Desbloqueos, ejércitos iniciales, dificultad, colección |
 | [docs/07-roadmap-tecnico.md](docs/07-roadmap-tecnico.md) | Stack, arquitectura, alcance del MVP, hitos |
 | [docs/08-glosario.md](docs/08-glosario.md) | Nombres, términos y decisiones abiertas |
+| [docs/09-otros-juegos.md](docs/09-otros-juegos.md) | Plataforma multi-juego: marco, Damas, Ludo, métricas alternativas |
+| [docs/10-interfaz.md](docs/10-interfaz.md) | Interfaz: mapa de pantallas, Salón, Compendio, descubrimiento |
 
 ## 🚦 Estado actual
 
 **Fase: Hito 0 — prototipo del bucle.** Ya hay un prototipo jugable de *un solo Duelo con Presión*: tablero de ajedrez, capturas que generan Presión, meta + límite de turnos y un rival con heurística simple. Es la base para validar que el bucle es divertido antes de construir la economía.
+
+Además, el motor ya es **multi-juego**: el núcleo (Duelo, Presión, IA) es agnóstico y cada juego se define como un `GameDef` en `src/engine/games/` (el ajedrez es el primero; damas es el siguiente — ver [docs/09](docs/09-otros-juegos.md)).
+
+Y ya existe la **interfaz inicial** ([docs/10](docs/10-interfaz.md)): **Salón** (menú) → **Preparación de Run** (elegir modo y ejército, con contenido bloqueado 🔒 y sus pistas) → **Duelo**, más el **Compendio** estilo Balatro donde las piezas se *descubren* jugando (persistencia en localStorage).
 
 ### ▶️ Cómo ejecutarlo
 
@@ -63,15 +69,18 @@ npm test         # tests del motor (Vitest)
 npm run build    # typecheck + build de producción
 ```
 
-Juegas con las **blancas**: haz clic en una pieza y luego en una casilla resaltada. Captura para subir la Presión y alcanza la meta antes de que se acaben los turnos.
+Desde el **Salón**, entra a *Jugar*, elige modo y ejército, y empieza el Duelo. Juegas con las **blancas**: haz clic en una pieza y luego en una casilla resaltada. Captura para subir la Presión y alcanza la meta antes de que se acaben los turnos. Las piezas que veas quedan **descubiertas** en el *Compendio*.
 
 ### 🗂️ Estructura del código
 
 ```
 src/
-  engine/   ← motor de reglas: TS PURO, determinista, testeable (sin React ni Pixi)
-  render/   ← capa PixiJS: dibuja el estado del engine, reporta clics
-  ui/       ← componentes React (App + HUD)
+  engine/         ← motor de reglas: TS PURO, determinista, testeable (sin React ni Pixi)
+    games/        ← un GameDef por juego (chess.ts, próximamente damas…)
+  game/           ← meta-progresión (colección/estadísticas) y catálogos de modos/ejércitos
+  render/         ← capa PixiJS: dibuja el estado del engine, reporta clics
+  ui/             ← componentes React
+    screens/      ← pantallas: Salón, Preparación de Run, Duelo, Compendio
 ```
 
 > El `engine` no importa nada de `render`/`ui`: esa separación es lo que hará viable añadir tableros, cartas y PvP más adelante. Ver [roadmap técnico](docs/07-roadmap-tecnico.md).
@@ -81,6 +90,7 @@ src/
 - **Stack:** TypeScript + React (UI/tienda) + PixiJS (tablero). Web-first, portable a desktop con Tauri.
 - **Rival:** híbrido — encuentros diseñados con heurística para el roguelike + IA de ajedrez real para un modo "puro"/dificultad extrema. El MVP arranca con encuentros diseñados.
 - **Alcance:** single-player roguelike primero, **diseñando desde ya los hooks para PvP asíncrono** con ejércitos construidos.
+- **Multi-juego:** modos separados por juego con **meta/colección compartida**; **Presión** como métrica universal (Contratos en evaluación como capa extra); **damas** es el siguiente juego en código, ludo después. Ver [docs/09](docs/09-otros-juegos.md).
 - **Repositorio:** público en GitHub.
 
 ## ❓ Decisiones aún abiertas

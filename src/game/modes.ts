@@ -1,0 +1,91 @@
+// Catálogo de MODOS (juegos jugables como run) y EJÉRCITOS INICIALES.
+// Contenido de UI dirigido por datos: la Preparación de Run y el Compendio
+// se dibujan desde aquí. Ver docs/09 (juegos) y docs/10 (interfaz).
+
+import { CHESS, GameDef } from '../engine';
+
+export type ModeStatus = 'playable' | 'locked';
+
+export interface ModeInfo {
+  id: string;
+  name: string;
+  /** Glifo placeholder hasta tener arte. */
+  icon: string;
+  tagline: string;
+  status: ModeStatus;
+  /** GameDef si el modo ya es jugable. */
+  game?: GameDef;
+  /** Cómo se desbloquea (se muestra en la carta bloqueada). */
+  unlockHint?: string;
+}
+
+export const MODES: ModeInfo[] = [
+  {
+    id: CHESS.id,
+    name: CHESS.name,
+    icon: '♞',
+    tagline: 'Tu ejército evoluciona: clases, poderes y cartas.',
+    status: 'playable',
+    game: CHESS,
+  },
+  {
+    id: 'damas',
+    name: 'Damas',
+    icon: '⛃',
+    tagline: 'Cadenas de captura como combos que disparan el mult.',
+    status: 'locked',
+    unlockHint: 'Se desbloquea al ganar tu primer run de Ajedrez.',
+  },
+  {
+    id: 'ludo',
+    name: 'Ludo',
+    icon: '🎲',
+    tagline: 'Doma el azar con dados coleccionables.',
+    status: 'locked',
+    unlockHint: 'En diseño — llegará después de las Damas.',
+  },
+];
+
+export interface ArmyInfo {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  status: 'playable' | 'locked';
+  unlockHint?: string;
+}
+
+/** Ejércitos iniciales ("barajas", ver docs/06). Hito 0: solo Clásico es funcional. */
+export const ARMIES: ArmyInfo[] = [
+  {
+    id: 'clasico',
+    name: 'Clásico',
+    icon: '♜',
+    description: 'El set estándar. Balanceado, para aprender.',
+    status: 'playable',
+  },
+  {
+    id: 'enjambre',
+    name: 'Enjambre',
+    icon: '♟',
+    description: 'Menos piezas mayores, más peones y caballos.',
+    status: 'locked',
+    unlockHint: 'Gana tu primer run.',
+  },
+  {
+    id: 'realeza',
+    name: 'Realeza',
+    icon: '♛',
+    description: 'Dama mejorada pero pocas piezas. Alto riesgo.',
+    status: 'locked',
+    unlockHint: 'Gana un run con el Enjambre.',
+  },
+  {
+    id: 'mercader',
+    name: 'Mercader',
+    icon: '⛁',
+    description: 'Más oro inicial, ejército débil. Build económica.',
+    status: 'locked',
+    unlockHint: 'Acumula 100 de oro en un run.',
+  },
+];

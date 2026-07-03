@@ -2,6 +2,8 @@
 
 La evolución del **tablero** es la capa de rejugabilidad "macro". Empieza en 8×8 clásico y se abre. Regla de diseño: **un tablero nuevo debe cambiar cómo piensas, no solo cómo se ve.**
 
+> Este doc cubre variantes de tablero **dentro del ajedrez**. Los **otros juegos** del salón (damas, ludo, …) — que reutilizan estas ideas de terreno y geometría — viven en [09-otros-juegos.md](09-otros-juegos.md).
+
 ---
 
 ## Filosofía de introducción

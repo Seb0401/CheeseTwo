@@ -1,97 +1,67 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { BoardView } from '../render/boardView';
-import {
-  applyMove,
-  chooseAiMove,
-  createDuel,
-  DuelState,
-  legalMovesFrom,
-  SquareIndex,
-} from '../engine';
-import { Hud } from './Hud';
+// Router de pantallas de la app (ver docs/10-interfaz.md):
+// Salón → Preparación de Run → Duelo, y Compendio como colección compartida.
+// El estado DEL JUEGO vive en el motor; aquí solo navegación y meta-progresión.
+
+import { useCallback, useState } from 'react';
+import { GameDef } from '../engine';
+import { discoverPieces, loadMeta, MetaState, recordDuel, saveMeta } from '../game/meta';
+import { CompendiumScreen } from './screens/CompendiumScreen';
+import { DuelScreen } from './screens/DuelScreen';
+import { RunSetupScreen } from './screens/RunSetupScreen';
+import { SalonScreen } from './screens/SalonScreen';
+
+type Screen =
+  | { name: 'salon' }
+  | { name: 'setup' }
+  | { name: 'compendio' }
+  | { name: 'duel'; game: GameDef };
 
 export function App() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const viewRef = useRef<BoardView | null>(null);
+  const [screen, setScreen] = useState<Screen>({ name: 'salon' });
+  const [meta, setMeta] = useState<MetaState>(() => loadMeta());
 
-  const [state, setState] = useState<DuelState>(() => createDuel());
-  const [selected, setSelected] = useState<SquareIndex | null>(null);
-
-  // Espejo de refs para que el callback de Pixi (creado una sola vez) lea lo actual.
-  const stateRef = useRef(state);
-  const selectedRef = useRef(selected);
-  stateRef.current = state;
-  selectedRef.current = selected;
-
-  const handleSquareClick = useCallback((sq: SquareIndex) => {
-    const s = stateRef.current;
-    if (s.status !== 'playing' || s.turn !== 'white') return;
-
-    const sel = selectedRef.current;
-
-    // Sin selección: intentar seleccionar una pieza propia con movimientos.
-    if (sel === null) {
-      if (legalMovesFrom(s, sq).length > 0) setSelected(sq);
-      return;
-    }
-
-    // Con selección: ¿el clic es un destino legal?
-    const move = legalMovesFrom(s, sel).find((m) => m.to === sq);
-    if (move) {
-      let next = applyMove(s, move);
-      setSelected(null);
-
-      // Respuesta del rival (negras) en la misma ronda.
-      if (next.status === 'playing') {
-        const ai = chooseAiMove(next, 'black');
-        next = ai ? applyMove(next, ai) : { ...next, status: 'won' };
-      }
-      setState(next);
-      return;
-    }
-
-    // Reseleccionar otra pieza propia, o deseleccionar.
-    if (legalMovesFrom(s, sq).length > 0) setSelected(sq);
-    else setSelected(null);
-  }, []);
-
-  const restart = useCallback(() => {
-    setState(createDuel());
-    setSelected(null);
-  }, []);
-
-  // Inicializa el tablero de Pixi una sola vez.
-  useEffect(() => {
-    const view = new BoardView({ onSquareClick: handleSquareClick });
-    viewRef.current = view;
-    let mounted = true;
-
-    view.init().then((canvas) => {
-      const host = containerRef.current;
-      if (mounted && host) {
-        host.replaceChildren(canvas);
-      }
+  const updateMeta = useCallback((fn: (m: MetaState) => MetaState) => {
+    setMeta((prev) => {
+      const next = fn(prev);
+      if (next !== prev) saveMeta(next);
+      return next;
     });
+  }, []);
 
-    return () => {
-      mounted = false;
-      view.destroy();
-      viewRef.current = null;
-    };
-  }, [handleSquareClick]);
-
-  // Redibuja cuando cambian el estado o la selección.
-  useEffect(() => {
-    const view = viewRef.current;
-    if (!view) return;
-    const targets = selected !== null ? legalMovesFrom(state, selected).map((m) => m.to) : [];
-    view.render(state.board, selected, targets);
-  }, [state, selected]);
-
-  return (
-    <main className="layout">
-      <div className="board" ref={containerRef} />
-      <Hud state={state} onRestart={restart} />
-    </main>
+  const startDuel = useCallback(
+    (game: GameDef) => {
+      // Las piezas del tablero inicial quedan descubiertas en el Compendio.
+      const types = [...new Set(game.createInitialBoard().flatMap((p) => (p ? [p.type] : [])))];
+      updateMeta((m) => discoverPieces(m, game.id, types));
+      setScreen({ name: 'duel', game });
+    },
+    [updateMeta],
   );
+
+  const handleDuelEnd = useCallback(
+    (won: boolean) => updateMeta((m) => recordDuel(m, won)),
+    [updateMeta],
+  );
+
+  switch (screen.name) {
+    case 'salon':
+      return (
+        <SalonScreen
+          onPlay={() => setScreen({ name: 'setup' })}
+          onCompendium={() => setScreen({ name: 'compendio' })}
+        />
+      );
+    case 'setup':
+      return <RunSetupScreen onStart={startDuel} onBack={() => setScreen({ name: 'salon' })} />;
+    case 'compendio':
+      return <CompendiumScreen meta={meta} onBack={() => setScreen({ name: 'salon' })} />;
+    case 'duel':
+      return (
+        <DuelScreen
+          game={screen.game}
+          onDuelEnd={handleDuelEnd}
+          onExit={() => setScreen({ name: 'salon' })}
+        />
+      );
+  }
 }

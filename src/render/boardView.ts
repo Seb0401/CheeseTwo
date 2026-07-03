@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
-import { Board, fileOf, rankOf, SquareIndex, toIndex } from '../engine';
+import { Board, fileOf, Piece, rankOf, SquareIndex, toIndex } from '../engine';
 
 const SQUARE = 72;
 const LIGHT = 0xead9b8;
@@ -7,23 +7,10 @@ const DARK = 0xb07a4e;
 const SELECT = 0x6fb36f;
 const TARGET = 0x84c084;
 
-const GLYPH: Record<string, string> = {
-  'white-king': '♔',
-  'white-queen': '♕',
-  'white-rook': '♖',
-  'white-bishop': '♗',
-  'white-knight': '♘',
-  'white-pawn': '♙',
-  'black-king': '♚',
-  'black-queen': '♛',
-  'black-rook': '♜',
-  'black-bishop': '♝',
-  'black-knight': '♞',
-  'black-pawn': '♟',
-};
-
 export interface BoardViewCallbacks {
   onSquareClick: (sq: SquareIndex) => void;
+  /** Glifo con el que dibujar cada pieza; lo aporta el GameDef activo. */
+  glyphFor: (piece: Piece) => string;
 }
 
 /**
@@ -93,7 +80,7 @@ export class BoardView {
       const piece = board[sq];
       if (!piece) continue;
       const text = new Text({
-        text: GLYPH[`${piece.color}-${piece.type}`],
+        text: this.cb.glyphFor(piece),
         style: new TextStyle({
           fontSize: SQUARE * 0.82,
           fill: piece.color === 'white' ? 0xffffff : 0x111111,

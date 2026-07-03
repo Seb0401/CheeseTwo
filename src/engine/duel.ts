@@ -1,40 +1,37 @@
-import { createInitialBoard } from './board';
-import { pseudoLegalMoves } from './moves';
-import { pressureForMove } from './pressure';
-import { Board, Color, DuelState, DuelStatus, Move, SquareIndex } from './types';
+import { Board, Color, DuelState, DuelStatus, GameDef, Move, SquareIndex } from './types';
 
 export interface DuelConfig {
   target?: number;
   turnLimit?: number;
 }
 
-export function createDuel(config: DuelConfig = {}): DuelState {
+export function createDuel(game: GameDef, config: DuelConfig = {}): DuelState {
   return {
-    board: createInitialBoard(),
+    gameId: game.id,
+    board: game.createInitialBoard(),
     turn: 'white',
     turnsUsed: 0,
-    turnLimit: config.turnLimit ?? 24,
+    turnLimit: config.turnLimit ?? game.defaults.turnLimit,
     pressure: 0,
-    target: config.target ?? 25,
+    target: config.target ?? game.defaults.target,
     status: 'playing',
   };
 }
 
-/** Aplica un movimiento devolviendo un tablero NUEVO (no muta el original). */
-export function applyMoveToBoard(board: Board, move: Move): Board {
+/** Aplicación por defecto: mover la pieza, devolviendo un tablero NUEVO. */
+export function defaultApplyToBoard(board: Board, move: Move): Board {
   const next = board.slice();
-  const piece = next[move.from]!;
-  next[move.to] = move.promotion ? { ...piece, type: 'queen' } : piece;
+  next[move.to] = next[move.from];
   next[move.from] = null;
   return next;
 }
 
 /** Movimientos jugables desde una casilla, respetando el turno y el estado. */
-export function legalMovesFrom(state: DuelState, from: SquareIndex): Move[] {
+export function legalMovesFrom(game: GameDef, state: DuelState, from: SquareIndex): Move[] {
   if (state.status !== 'playing') return [];
   const piece = state.board[from];
   if (!piece || piece.color !== state.turn) return [];
-  return pseudoLegalMoves(state.board, from);
+  return game.movesFrom(state.board, from);
 }
 
 /**
@@ -42,19 +39,20 @@ export function legalMovesFrom(state: DuelState, from: SquareIndex): Move[] {
  * actualiza la Presión y resuelve las condiciones de fin.
  * Determinista: mismo estado + mismo movimiento → mismo resultado.
  */
-export function applyMove(state: DuelState, move: Move): DuelState {
+export function applyMove(game: GameDef, state: DuelState, move: Move): DuelState {
   if (state.status !== 'playing') return state;
 
   const mover = state.turn;
-  const board = applyMoveToBoard(state.board, move);
+  const board = (game.applyToBoard ?? defaultApplyToBoard)(state.board, move);
 
   let pressure = state.pressure;
-  if (mover === 'white') pressure += pressureForMove(move);
+  if (mover === 'white') pressure += game.pressureForMove(move);
 
   let status: DuelStatus = 'playing';
 
-  // Capturar al rey termina el Duelo de inmediato.
-  if (move.captured?.type === 'king') {
+  // Victoria inmediata: capturar la pieza objetivo (rey) o la condición propia del juego.
+  const capturedObjective = move.captured && game.pieces[move.captured.type]?.objective;
+  if (capturedObjective || game.winsOnMove?.(board, move)) {
     status = mover === 'white' ? 'won' : 'lost';
   }
   // Alcanzar la meta de Presión gana el Duelo.

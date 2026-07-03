@@ -20,22 +20,24 @@ Pila concreta sugerida para arrancar:
 - **pnpm** como gestor de paquetes.
 - **ESLint + Prettier**.
 
-Estructura de carpetas propuesta:
+Estructura de carpetas (estado actual + destino):
 ```
 /src
   /engine        ← motor de reglas: TS PURO, sin React ni Pixi, determinista
-    /geometry    ← grafo de casillas (soporta 8x8, hex, 3D)
-    /pieces      ← definiciones data-driven
-    /effects     ← sistema eventos→efectos (jokers, poderes)
-    /scoring     ← cálculo de Presión
-    /ai          ← rivales: heurística (MVP) + minimax (modo puro)
-  /game          ← orquestación de run/duelo/tienda (usa engine)
+    types.ts     ← núcleo genérico + contrato GameDef (multi-juego) ✅
+    geometry.ts  ← hoy 8×8 denso; destino: grafo de casillas (hex, 3D)
+    duel.ts      ← máquina de estados del Duelo, agnóstica al juego ✅
+    ai.ts        ← heurística voraz genérica (MVP); minimax aparte (modo puro)
+    /games       ← un GameDef por juego: chess ✅, damas, ludo… (ver doc 09)
+    /effects     ← (futuro) sistema eventos→efectos (jokers, poderes)
+  /game          ← (futuro) orquestación de run/tienda (usa engine)
   /render        ← capa PixiJS (dibuja el estado del engine)
   /ui            ← componentes React (tienda, HUD, menús)
-  /content       ← datos: piezas, jokers, planetas, tarots (JSON/TS)
+  /content       ← (futuro) datos: piezas, jokers, planetas, tarots (JSON/TS)
   /net           ← (stub) hooks para PvP futuro — ver nota abajo
-/tests
 ```
+
+> **Principio multi-juego (nuevo):** el núcleo del motor no conoce ningún juego; cada juego (ajedrez, damas, ludo) implementa la interfaz `GameDef` (piezas data-driven, movimientos, tabla de Presión, condición de victoria). Añadir un juego = añadir contenido, no tocar el motor. Ver [09-otros-juegos.md](09-otros-juegos.md).
 
 ## Nota PvP (alcance: SP primero, hooks desde ya)
 
@@ -71,7 +73,13 @@ Piezas, poderes, clases, jokers, planetas, tarots → definidos en **datos** (JS
 - Un Duelo → una "tienda" mínima → otro Duelo. Sin arte, todo placeholder.
 - **Meta del hito:** responder "¿es divertido acumular Presión y combinar 2 cartas?". Si no, iterar aquí antes de seguir.
 
-### 🐣 Hito 1 — Un run completo
+### 🥚½ Hito 0.5 — Damas jugable (validar el motor multi-juego)
+- Segundo `GameDef`: damas con captura obligatoria, cadenas (mult por salto) y coronación.
+- Generalizar `Move` a lista de capturas + camino (único cambio previsto en el núcleo).
+- Selector de juego mínimo al empezar un Duelo.
+- **Meta del hito:** probar que "un juego nuevo = contenido, no motor" y que las cadenas-combo son divertidas. Diseño completo en [09-otros-juegos.md](09-otros-juegos.md).
+
+### 🐣 Hito 1 — Un run completo (sobre ajedrez)
 - Estructura de Acto (Menor/Mayor/Jefe) + cláusulas de Jefe.
 - Tienda real con oro, rerolls, slots de Joker.
 - 15-20 Jokers, 8-10 poderes, sistema de clases básico, mejoras de pieza.
@@ -82,11 +90,13 @@ Piezas, poderes, clases, jokers, planetas, tarots → definidos en **datos** (JS
 - Planetas, Tarots, Espectros.
 - Ejércitos iniciales múltiples + dificultad ascendente.
 - Casillas especiales / terreno (primer paso de evolución de tablero).
-- Compendio/colección.
+- Compendio/colección **compartida entre modos** + desbloqueo cruzado del modo damas.
 
-### 🐔 Hito 3 — Expansión de tableros
+### 🐔 Hito 3 — Expansión de tableros y juegos
 - Tableros grandes, formas raras, hexagonal.
-- (Post-lanzamiento) 3D y multi-jugador.
+- RNG con semilla + asientos N (>2 jugadores) → **Ludo** (ver [09](09-otros-juegos.md#4-ludo-roguelike-diseño-ahora-código-después)).
+- Prototipo de **Contratos** sobre la Presión.
+- (Post-lanzamiento) 3D y multi-jugador de ajedrez.
 
 ## Testing y balance
 
