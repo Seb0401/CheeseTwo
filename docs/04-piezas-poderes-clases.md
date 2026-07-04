@@ -2,6 +2,8 @@
 
 Donde vive la fantasía de "construir un ejército roto". Tres capas: **Pieza** (qué es y cómo se mueve base) → **Clase** (arquetipo que le da identidad y poderes) → **Poderes/Mejoras** (habilidades concretas, mejorables).
 
+> **Estado (Hito 0):** las tres primeras piezas heréticas (✅ en la tabla) ya están en el motor y entran en juego con el ejército **Herético**. También existen los primeros **6 Estandartes** (jokers) jugables vía draft: Cazador, La Turba, Verdugo, El Coronista, Cartógrafo y El Monje (`src/engine/banners.ts`) — Cazador y Verdugo salieron de las ideas de clases de abajo; cuando exista el sistema de clases, esos efectos migrarán o convivirán.
+
 ---
 
 ## 1. Piezas
@@ -11,11 +13,15 @@ Peón, Caballo, Alfil, Torre, Dama, Rey. Todas son **mejorables** — incluso la
 
 ### Piezas nuevas (comprables/desbloqueables)
 Catálogo inicial de ideas (mezclando variantes clásicas de ajedrez de hadas + inventos):
-| Pieza | Movimiento base | Gancho |
-|---|---|---|
-| **Canciller** | torre + caballo | híbrido potente |
-| **Arzobispo** | alfil + caballo | híbrido de casilla contraria |
-| **Saltamontes** | como dama pero salta sobre una pieza para caer justo detrás | posicional raro |
+| Pieza | Movimiento base | Gancho | Casta |
+|---|---|---|---|
+| **Canciller** ✅ | torre + caballo | híbrido potente | Mayor |
+| **Arzobispo** ✅ | alfil + caballo | híbrido de casilla contraria | Menor |
+| **Saltamontes** ✅ | como dama pero salta sobre una pieza para caer justo detrás | posicional raro | Menor |
+| **Camello** ✅ | saltador (3,1), un "caballo largo" | cobertura rara, salta bloqueos | Menor |
+| **Cañón** ✅ | como torre, pero captura saltando sobre una pieza-pantalla (xiangqi) | control a distancia | Mayor |
+| **Amazona** ✅ | dama + caballo | pieza-monstruo de Élite | Élite |
+| **Berolina** ✅ | peón espejo: avanza en diagonal, captura de frente | infantería alternativa | Infantería |
 | **Explorador** | avanza y "revela" casillas (contra niebla) | utilidad/anti-cláusula |
 | **Autómata** | se mueve 1 casilla pero repite tu jugada anterior | combos con jokers |
 | **Espejo** | copia el movimiento de la pieza aliada adyacente | sinergia |

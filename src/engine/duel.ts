@@ -1,20 +1,36 @@
-import { Board, Color, DuelState, DuelStatus, GameDef, Move, SquareIndex } from './types';
+import { scoreMove } from './scoring';
+import {
+  Board,
+  capturesOf,
+  Color,
+  DuelState,
+  DuelStatus,
+  GameDef,
+  Move,
+  SquareIndex,
+} from './types';
 
 export interface DuelConfig {
   target?: number;
   turnLimit?: number;
+  /** Estandartes equipados por el jugador. */
+  banners?: string[];
+  /** Tablero inicial alternativo (ejércitos iniciales lo modifican). */
+  board?: Board;
 }
 
 export function createDuel(game: GameDef, config: DuelConfig = {}): DuelState {
   return {
     gameId: game.id,
-    board: game.createInitialBoard(),
+    board: config.board ?? game.createInitialBoard(),
     turn: 'white',
     turnsUsed: 0,
     turnLimit: config.turnLimit ?? game.defaults.turnLimit,
     pressure: 0,
     target: config.target ?? game.defaults.target,
     status: 'playing',
+    banners: config.banners ?? [],
+    lastScore: null,
   };
 }
 
@@ -43,15 +59,22 @@ export function applyMove(game: GameDef, state: DuelState, move: Move): DuelStat
   if (state.status !== 'playing') return state;
 
   const mover = state.turn;
-  const board = (game.applyToBoard ?? defaultApplyToBoard)(state.board, move);
 
+  // Puntuar ANTES de aplicar al tablero (los efectos ven la pieza en su origen).
   let pressure = state.pressure;
-  if (mover === 'white') pressure += game.pressureForMove(move);
+  let lastScore = state.lastScore;
+  if (mover === 'white') {
+    const score = scoreMove(game, state, move);
+    pressure += score.total;
+    lastScore = score;
+  }
+
+  const board = (game.applyToBoard ?? defaultApplyToBoard)(state.board, move);
 
   let status: DuelStatus = 'playing';
 
   // Victoria inmediata: capturar la pieza objetivo (rey) o la condición propia del juego.
-  const capturedObjective = move.captured && game.pieces[move.captured.type]?.objective;
+  const capturedObjective = capturesOf(move).some((c) => game.pieces[c.type]?.objective);
   if (capturedObjective || game.winsOnMove?.(board, move)) {
     status = mover === 'white' ? 'won' : 'lost';
   }
@@ -71,5 +94,5 @@ export function applyMove(game: GameDef, state: DuelState, move: Move): DuelStat
     }
   }
 
-  return { ...state, board, turn: nextTurn, pressure, turnsUsed, status };
+  return { ...state, board, turn: nextTurn, pressure, turnsUsed, status, lastScore };
 }

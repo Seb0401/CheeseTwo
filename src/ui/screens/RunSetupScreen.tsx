@@ -1,20 +1,23 @@
 // Preparación de Run: elegir Modo (juego) y Ejército inicial antes de jugar.
 // Se dibuja desde los catálogos data-driven de src/game/modes.ts.
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { GameDef } from '../../engine';
-import { ARMIES, MODES } from '../../game/modes';
+import { armiesForMode, ArmyInfo, MODES } from '../../game/modes';
 
 interface RunSetupScreenProps {
-  onStart: (game: GameDef) => void;
+  onStart: (game: GameDef, army: ArmyInfo) => void;
   onBack: () => void;
 }
 
 export function RunSetupScreen({ onStart, onBack }: RunSetupScreenProps) {
   const [modeId, setModeId] = useState(MODES.find((m) => m.status === 'playable')!.id);
-  const [armyId, setArmyId] = useState(ARMIES.find((a) => a.status === 'playable')!.id);
+  const [armyId, setArmyId] = useState('clasico');
 
   const mode = MODES.find((m) => m.id === modeId)!;
+  // Los ejércitos dependen del modo (Herético solo tiene sentido en Ajedrez).
+  const armies = useMemo(() => armiesForMode(modeId), [modeId]);
+  const army = armies.find((a) => a.id === armyId) ?? armies[0];
 
   return (
     <main className="screen">
@@ -50,7 +53,7 @@ export function RunSetupScreen({ onStart, onBack }: RunSetupScreenProps) {
       <section>
         <h3 className="section-title">Ejército inicial</h3>
         <div className="card-row">
-          {ARMIES.map((a) => (
+          {armies.map((a) => (
             <button
               key={a.id}
               className={`select-card ${a.status === 'locked' ? 'locked' : ''} ${
@@ -71,11 +74,12 @@ export function RunSetupScreen({ onStart, onBack }: RunSetupScreenProps) {
 
       <footer className="setup-footer">
         <p className="hint">
-          Hito 0: el run es un único <strong>Duelo</strong> de prueba y solo el ejército Clásico
-          está operativo. Actos, tienda y cartas llegan en el Hito 1.
+          El run son <strong>3 Duelos</strong> de dificultad creciente hasta el <strong>Jefe</strong>
+          , con una <strong>Tienda</strong> entre cada uno para comprar Estandartes y{' '}
+          <strong>forjar</strong> tus fichas.
         </p>
-        <button className="btn btn-primary btn-start" onClick={() => onStart(mode.game!)}>
-          Empezar Duelo — {mode.name}
+        <button className="btn btn-primary btn-start" onClick={() => onStart(mode.game!, army)}>
+          Empezar run — {mode.name} · {army.name}
         </button>
       </footer>
     </main>

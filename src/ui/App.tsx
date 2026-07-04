@@ -1,12 +1,14 @@
 // Router de pantallas de la app (ver docs/10-interfaz.md):
-// Salón → Preparación de Run → Duelo, y Compendio como colección compartida.
+// Salón → Preparación de Run → RunScreen (Tienda ↔ Duelo ↔ Resultado),
+// y Compendio como colección compartida.
 // El estado DEL JUEGO vive en el motor; aquí solo navegación y meta-progresión.
 
 import { useCallback, useState } from 'react';
-import { GameDef } from '../engine';
+import { Board, GameDef, PieceType } from '../engine';
 import { discoverPieces, loadMeta, MetaState, recordDuel, saveMeta } from '../game/meta';
+import { ArmyInfo } from '../game/modes';
 import { CompendiumScreen } from './screens/CompendiumScreen';
-import { DuelScreen } from './screens/DuelScreen';
+import { RunScreen } from './screens/RunScreen';
 import { RunSetupScreen } from './screens/RunSetupScreen';
 import { SalonScreen } from './screens/SalonScreen';
 
@@ -14,7 +16,7 @@ type Screen =
   | { name: 'salon' }
   | { name: 'setup' }
   | { name: 'compendio' }
-  | { name: 'duel'; game: GameDef };
+  | { name: 'run'; game: GameDef; board: Board };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'salon' });
@@ -28,17 +30,18 @@ export function App() {
     });
   }, []);
 
-  const startDuel = useCallback(
-    (game: GameDef) => {
-      // Las piezas del tablero inicial quedan descubiertas en el Compendio.
-      const types = [...new Set(game.createInitialBoard().flatMap((p) => (p ? [p.type] : [])))];
-      updateMeta((m) => discoverPieces(m, game.id, types));
-      setScreen({ name: 'duel', game });
-    },
+  /** Preparación lista → arrancar el run con el ejército elegido aplicado. */
+  const startRun = useCallback((game: GameDef, army: ArmyInfo) => {
+    const base = game.createInitialBoard();
+    const board = army.apply ? army.apply(base) : base;
+    setScreen({ name: 'run', game, board });
+  }, []);
+
+  const discover = useCallback(
+    (gameId: string, types: PieceType[]) => updateMeta((m) => discoverPieces(m, gameId, types)),
     [updateMeta],
   );
-
-  const handleDuelEnd = useCallback(
+  const recordDuelResult = useCallback(
     (won: boolean) => updateMeta((m) => recordDuel(m, won)),
     [updateMeta],
   );
@@ -52,14 +55,17 @@ export function App() {
         />
       );
     case 'setup':
-      return <RunSetupScreen onStart={startDuel} onBack={() => setScreen({ name: 'salon' })} />;
+      return <RunSetupScreen onStart={startRun} onBack={() => setScreen({ name: 'salon' })} />;
     case 'compendio':
       return <CompendiumScreen meta={meta} onBack={() => setScreen({ name: 'salon' })} />;
-    case 'duel':
+    case 'run':
       return (
-        <DuelScreen
+        <RunScreen
           game={screen.game}
-          onDuelEnd={handleDuelEnd}
+          initialBoard={screen.board}
+          onDiscoverPieces={discover}
+          onRecordDuel={recordDuelResult}
+          onRunEnd={() => {}}
           onExit={() => setScreen({ name: 'salon' })}
         />
       );

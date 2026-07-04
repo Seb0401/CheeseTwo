@@ -4,6 +4,7 @@ import {
   applyMove,
   chooseAiMove,
   createDuel,
+  DuelConfig,
   DuelState,
   GameDef,
   legalMovesFrom,
@@ -13,16 +14,33 @@ import { Hud } from '../Hud';
 
 interface DuelScreenProps {
   game: GameDef;
-  /** Se llama una sola vez por Duelo terminado (ganado o perdido). */
-  onDuelEnd: (won: boolean) => void;
+  /** Tablero, Estandartes, meta y límite de turnos de este Duelo. */
+  config?: DuelConfig;
+  /** Subtítulo del Duelo (ej. "Rival Menor · Duelo 1/3"). */
+  title?: string;
+  gold?: number;
+  /** Se llama una sola vez cuando el Duelo termina, con el estado final. */
+  onResult: (state: DuelState) => void;
+  /** Avanza tras el Duelo (a la tienda o al resultado del run). */
+  onContinue: () => void;
   onExit: () => void;
+  exitLabel?: string;
 }
 
-export function DuelScreen({ game, onDuelEnd, onExit }: DuelScreenProps) {
+export function DuelScreen({
+  game,
+  config,
+  title,
+  gold,
+  onResult,
+  onContinue,
+  onExit,
+  exitLabel,
+}: DuelScreenProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<BoardView | null>(null);
 
-  const [state, setState] = useState<DuelState>(() => createDuel(game));
+  const [state, setState] = useState<DuelState>(() => createDuel(game, config));
   const [selected, setSelected] = useState<SquareIndex | null>(null);
 
   // Espejo de refs para que el callback de Pixi (creado una sola vez) lea lo actual.
@@ -31,16 +49,16 @@ export function DuelScreen({ game, onDuelEnd, onExit }: DuelScreenProps) {
   stateRef.current = state;
   selectedRef.current = selected;
 
-  // Reporta el resultado a la meta-progresión una sola vez por Duelo.
+  // Reporta el resultado una sola vez por Duelo.
   const reportedRef = useRef(false);
-  const onDuelEndRef = useRef(onDuelEnd);
-  onDuelEndRef.current = onDuelEnd;
+  const onResultRef = useRef(onResult);
+  onResultRef.current = onResult;
   useEffect(() => {
     if (state.status !== 'playing' && !reportedRef.current) {
       reportedRef.current = true;
-      onDuelEndRef.current(state.status === 'won');
+      onResultRef.current(state);
     }
-  }, [state.status]);
+  }, [state]);
 
   const handleSquareClick = useCallback(
     (sq: SquareIndex) => {
@@ -77,17 +95,13 @@ export function DuelScreen({ game, onDuelEnd, onExit }: DuelScreenProps) {
     [game],
   );
 
-  const restart = useCallback(() => {
-    reportedRef.current = false;
-    setState(createDuel(game));
-    setSelected(null);
-  }, [game]);
-
   // Inicializa el tablero de Pixi una sola vez.
   useEffect(() => {
     const view = new BoardView({
       onSquareClick: handleSquareClick,
-      glyphFor: (piece) => game.pieces[piece.type]?.glyph[piece.color] ?? '?',
+      // Damas reutiliza el tipo 'king' para su Dama: le damos su propio emblema.
+      emblemKeyFor: (piece) =>
+        game.id === 'damas' && piece.type === 'king' ? 'king_damas' : piece.type,
     });
     viewRef.current = view;
     let mounted = true;
@@ -118,7 +132,15 @@ export function DuelScreen({ game, onDuelEnd, onExit }: DuelScreenProps) {
   return (
     <main className="layout">
       <div className="board" ref={containerRef} />
-      <Hud game={game} state={state} onRestart={restart} onExit={onExit} />
+      <Hud
+        game={game}
+        state={state}
+        title={title}
+        gold={gold}
+        onContinue={onContinue}
+        onExit={onExit}
+        exitLabel={exitLabel}
+      />
     </main>
   );
 }

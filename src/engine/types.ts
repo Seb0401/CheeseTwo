@@ -21,16 +21,52 @@ export type SquareIndex = number;
 export interface Move {
   from: SquareIndex;
   to: SquareIndex;
-  /** Pieza capturada, si la hay. (Damas encadenará varias: se ampliará a lista.) */
+  /** Pieza capturada en una captura simple (ajedrez). Para cadenas, usar `captures`. */
   captured?: Piece;
+  /** Piezas capturadas por una jugada de captura múltiple (cadena de damas). */
+  captures?: Piece[];
+  /** Casillas intermedias por las que pasa una cadena (para animar/depurar). */
+  path?: SquareIndex[];
   /** La pieza se transforma al llegar (peón corona, ficha de damas asciende). */
   promotion?: boolean;
+}
+
+/** Todas las piezas que captura una jugada, unificando `captured` y `captures`. */
+export function capturesOf(move: Move): Piece[] {
+  if (move.captures) return move.captures;
+  return move.captured ? [move.captured] : [];
 }
 
 /** Tablero denso. En el futuro se generalizará a un grafo de casillas (hex, 3D). */
 export type Board = (Piece | null)[];
 
 export type DuelStatus = 'playing' | 'won' | 'lost';
+
+/** Una línea del desglose de puntaje, para mostrar en el HUD ("Captura: Torre — +5 base"). */
+export interface ScoreNote {
+  source: string;
+  detail: string;
+}
+
+/**
+ * Contribución de puntaje del propio juego a una jugada, antes de los Estandartes.
+ * `multAdd` suma al mult (se acumula con +mult de Estandartes) y `multTimes` lo
+ * multiplica (ej. cadenas de damas: ×saltos). El núcleo (scoring.ts) los combina.
+ */
+export interface MoveScore {
+  base: number;
+  multAdd?: number;
+  multTimes?: number;
+  notes: ScoreNote[];
+}
+
+/** Resultado de puntuar una jugada: Presión = base × mult, con su desglose. */
+export interface ScoreBreakdown {
+  base: number;
+  mult: number;
+  total: number;
+  notes: ScoreNote[];
+}
 
 export interface DuelState {
   /** Juego al que pertenece este Duelo (id del GameDef). */
@@ -46,6 +82,10 @@ export interface DuelState {
   /** Meta de Presión a alcanzar para ganar el Duelo. */
   target: number;
   status: DuelStatus;
+  /** Ids de los Estandartes (jokers) equipados por el jugador. */
+  banners: string[];
+  /** Desglose de la última jugada del jugador (para el HUD). */
+  lastScore: ScoreBreakdown | null;
 }
 
 /** Datos de un tipo de pieza — contenido dirigido por datos, no por código. */
@@ -57,6 +97,12 @@ export interface PieceInfo {
   objective?: boolean;
   /** Glifo con el que se dibuja (placeholder hasta tener arte). */
   glyph: Record<Color, string>;
+  /**
+   * Casta (rango) de la pieza: agrupa piezas de poder similar. En la Forja de la
+   * tienda solo se intercambian piezas de la MISMA casta (un peón nunca se vuelve
+   * dama). Ver src/game/castas.ts. Sin casta = no forjable (ej. el Rey).
+   */
+  casta?: string;
 }
 
 /**
@@ -77,8 +123,11 @@ export interface GameDef {
   createInitialBoard(): Board;
   /** Movimientos pseudo-legales desde `from` (el núcleo filtra turno/estado). */
   movesFrom(board: Board, from: SquareIndex): Move[];
-  /** Presión (Base × Mult) generada por una jugada. Mult fijo en 1 en el Hito 0. */
-  pressureForMove(move: Move): number;
+  /**
+   * Puntaje que el propio juego aporta a una jugada (base + mult + desglose).
+   * Los Estandartes/poderes se suman encima en el núcleo (scoring.ts).
+   */
+  scoreForMove(move: Move): MoveScore;
   /**
    * Aplica el movimiento devolviendo un tablero NUEVO. Opcional: si se omite,
    * el núcleo mueve la pieza tal cual (suficiente si no hay promociones ni

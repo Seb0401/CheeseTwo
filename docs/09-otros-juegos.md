@@ -5,7 +5,9 @@ CheeseTwo crece de "ajedrez roguelike" a **salón de juegos de mesa roguelike**:
 **Decisiones tomadas ✅**
 - **Modos separados, meta compartida.** Cada juego es su propio run (como los personajes de Slay the Spire), pero colección, compendio y desbloqueos son globales. Un modo mixto (runs que combinan juegos) queda como posible desbloqueo endgame; la arquitectura no lo impide.
 - **Presión universal.** Todos los juegos puntúan con `Base × Mult` y sus propias tablas de acciones, para que las cartas compartidas funcionen en todos. Queda abierta la búsqueda de una métrica aún más divertida (ver §6) — cualquier reemplazo debe ser también universal.
-- **Damas es el siguiente juego en código.** Ludo se diseña ya, se implementa después (necesita azar con semilla y 4 asientos).
+- **Damas ya está implementada y jugable ✅** (cadenas de captura con mult por salto, captura obligatoria, coronación). Ludo se diseña ya, se implementa después (necesita azar con semilla y 4 asientos).
+
+> **Estado:** el motor multi-juego ya sostiene **dos juegos jugables** (Ajedrez y Damas), ambos dentro del mismo sistema de run/tienda. Los Estandartes universales (Verdugo, Coronista, Cartógrafo, El Monje) funcionan en ambos — la sinergia entre juegos ya es real.
 
 ---
 

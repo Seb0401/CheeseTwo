@@ -54,11 +54,17 @@ INICIO DE RUN  →  elige ejército inicial + tablero
 
 ## 🚦 Estado actual
 
-**Fase: Hito 0 — prototipo del bucle.** Ya hay un prototipo jugable de *un solo Duelo con Presión*: tablero de ajedrez, capturas que generan Presión, meta + límite de turnos y un rival con heurística simple. Es la base para validar que el bucle es divertido antes de construir la economía.
+**Fase: Hito 1 en curso — el bucle roguelike jugable.** Un **run** son **3 Duelos** de dificultad creciente (Rival Menor → Mayor → **JEFE**) con una **Tienda** antes de cada uno. Ganas Duelos generando **Presión** (`Base × Mult` estilo Balatro); el oro se gasta en Estandartes y en **forjar** tu ejército.
 
-Además, el motor ya es **multi-juego**: el núcleo (Duelo, Presión, IA) es agnóstico y cada juego se define como un `GameDef` en `src/engine/games/` (el ajedrez es el primero; damas es el siguiente — ver [docs/09](docs/09-otros-juegos.md)).
+El motor es **multi-juego**: el núcleo (Duelo, Presión, IA) es agnóstico y cada juego es un `GameDef` en `src/engine/games/`. Ya hay **dos modos jugables**: **Ajedrez** y **Damas** (con cadenas de captura que multiplican la Presión). Ver [docs/09](docs/09-otros-juegos.md).
 
-Y ya existe la **interfaz inicial** ([docs/10](docs/10-interfaz.md)): **Salón** (menú) → **Preparación de Run** (elegir modo y ejército, con contenido bloqueado 🔒 y sus pistas) → **Duelo**, más el **Compendio** estilo Balatro donde las piezas se *descubren* jugando (persistencia en localStorage).
+Interfaz ([docs/10](docs/10-interfaz.md)): **Salón** → **Preparación de Run** (modo + ejército) → **Tienda ↔ Duelo** ×3 → **Resultado**, más el **Compendio** estilo Balatro donde las piezas se *descubren* jugando (persistencia en localStorage).
+
+Contenido y sistemas ya jugables:
+- **6 Estandartes** (jokers) con efectos `Base × Mult` data-driven (`src/engine/banners.ts`); el HUD muestra el **desglose de cada jugada**.
+- **Piezas heréticas** coleccionables: Canciller, Arzobispo, Saltamontes, Camello, Cañón, Amazona y Berolina.
+- **Castas** (Infantería/Menor/Mayor/Élite) y la **Forja**: cambias una ficha por otra **de su misma casta** pagando oro — un peón nunca se vuelve dama.
+- **Fichas low-poly**: piezas vectoriales facetadas (moneda con luz/sombra + emblema), con **aro dorado** en las heréticas para que destaquen (`src/render/pieces.ts`).
 
 ### ▶️ Cómo ejecutarlo
 
@@ -69,18 +75,19 @@ npm test         # tests del motor (Vitest)
 npm run build    # typecheck + build de producción
 ```
 
-Desde el **Salón**, entra a *Jugar*, elige modo y ejército, y empieza el Duelo. Juegas con las **blancas**: haz clic en una pieza y luego en una casilla resaltada. Captura para subir la Presión y alcanza la meta antes de que se acaben los turnos. Las piezas que veas quedan **descubiertas** en el *Compendio*.
+Desde el **Salón**, entra a *Jugar*, elige modo (Ajedrez o Damas) y ejército, y empieza el run. En la **Tienda** compra Estandartes y **forja** tus fichas; luego juega el Duelo. Juegas con las **blancas**: clic en una pieza y luego en una casilla resaltada. Captura para subir la Presión — el HUD muestra el desglose `Base × Mult` de cada jugada — y alcanza la meta antes de que se acaben los turnos. Las piezas que uses quedan **descubiertas** en el *Compendio*.
 
 ### 🗂️ Estructura del código
 
 ```
 src/
   engine/         ← motor de reglas: TS PURO, determinista, testeable (sin React ni Pixi)
-    games/        ← un GameDef por juego (chess.ts, próximamente damas…)
-  game/           ← meta-progresión (colección/estadísticas) y catálogos de modos/ejércitos
+    games/        ← un GameDef por juego (chess.ts, damas.ts)
+    scoring.ts    ← Presión = Base × Mult; banners.ts = Estandartes; rng.ts = azar con semilla
+  game/           ← run/tienda (run.ts), castas (castas.ts), modos/ejércitos, meta-progresión
   render/         ← capa PixiJS: dibuja el estado del engine, reporta clics
   ui/             ← componentes React
-    screens/      ← pantallas: Salón, Preparación de Run, Duelo, Compendio
+    screens/      ← Salón, Preparación, Tienda, Duelo (RunScreen las orquesta), Compendio
 ```
 
 > El `engine` no importa nada de `render`/`ui`: esa separación es lo que hará viable añadir tableros, cartas y PvP más adelante. Ver [roadmap técnico](docs/07-roadmap-tecnico.md).

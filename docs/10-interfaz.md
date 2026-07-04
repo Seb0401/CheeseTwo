@@ -10,7 +10,10 @@ Define el **mapa de pantallas** y el vocabulario de UI para que la interfaz teng
 |---|---|---|
 | **El Salón** | pantalla de título / menú principal del "salón de juegos" | Main Menu |
 | **Preparación de Run** | elegir **Modo** (juego) + **Ejército inicial** (+ **Corona** más adelante) | selección de Deck + Stake |
+| **Tienda** | entre Duelos: comprar Estandartes, **forjar** fichas, rerollar | the Shop |
+| **Forja** | cambiar una ficha por otra de su **misma casta** pagando oro | — (aporte propio) |
 | **Duelo** | la pantalla de combate: tablero + HUD de Presión | la mano jugándose |
+| **Resultado** | pantalla de fin de run (venciste al Jefe / caíste) | win/lose screen |
 | **HUD** | panel lateral del Duelo: Presión/meta, turnos, acciones | marcador fichas × mult |
 | **Compendio** | la colección global: piezas, cartas, modos — descubiertos u ocultos | Collection |
 | **Descubrir** | un elemento visto por primera vez jugando pasa de silueta "?" a carta visible | descubrir jokers |
@@ -35,14 +38,21 @@ Reglas transversales:
          → [Corona])             Estandartes, estadísticas)
                     │
                     ▼
-                 DUELO  ──────►  [futuro: RECOMPENSA → TIENDA → mapa de Acto]
+      ┌────────► TIENDA ◄──────────┐   (comprar Estandartes · Forja · reroll)
+      │             │              │
+      │             ▼              │
+      │          DUELO ── ganas ───┘   (×3: Menor → Mayor → JEFE)
+      │             │
+      │          pierdes / vences al Jefe
+      │             ▼
+      └────────  RESULTADO ──► Salón
              (tablero + HUD)             │
                     ▲                    │
                     └────────────────────┘
 ```
 
-- **Hito 0 (actual):** Preparación → un único Duelo suelto → volver al Salón. Ganar/perder solo actualiza estadísticas y descubrimientos.
-- **Hito 1:** entre Duelo y Duelo entran **Recompensa** y **Tienda**, y la Preparación desemboca en un run de verdad (Actos). El Salón gana "Continuar run".
+- **Actual (Hito 1 en curso):** Preparación → **run de 3 Duelos** (Menor → Mayor → JEFE) con una **Tienda** antes de cada Duelo. Ganar da oro; perder cualquier Duelo termina el run. El `RunScreen` posee el estado del run (roster, oro, Estandartes) y orquesta las transiciones.
+- **Siguiente:** Actos múltiples, cláusulas de Jefe, y persistir/continuar un run desde el Salón.
 
 ## 3. Qué muestra cada pantalla hoy (Hito 0)
 
@@ -55,8 +65,14 @@ Título + tres acciones: **Jugar**, **Compendio**, **Opciones** (deshabilitado).
 - Aviso honesto de alcance ("el run es un único Duelo de prueba") + **Empezar Duelo**.
 - Futuro: selector de **Corona** (dificultad) cuando exista la meta-progresión real.
 
+### Tienda (`ShopScreen`)
+Entre Duelos. Tres bloques: **Estandartes** (2 ofertas con RNG por semilla, comprar por oro, slots limitados, **reroll**), **Forja** (tu ejército agrupado por tipo; eliges una ficha y la cambias por otra de su misma **casta**, pagando según la casta), y **Continuar** al siguiente Duelo. Cabecera con el oro. La lógica pura vive en `src/game/run.ts`.
+
+### Fichas (render `src/render/pieces.ts`)
+Las piezas se dibujan con estética **low-poly**: cada una es una "moneda" facetada (caras de luz/sombra desde arriba-izquierda) con un **emblema geométrico** vectorial encima y una sombra proyectada. Las piezas **heréticas** llevan un **aro dorado** que las hace destacar como especiales/coleccionables. Todo es vectorial (PixiJS Graphics), sin glifos de texto, y data-driven: añadir una ficha = registrar su emblema en `EMBLEMS`. (El Compendio y la Tienda aún muestran los glifos Unicode del `GameDef`; migrarlos a mini-fichas low-poly es un pendiente.)
+
 ### Duelo (`DuelScreen`)
-Tablero PixiJS + **HUD**: nombre del modo, barra de Presión (actual/meta), turnos (usados/límite), banner de victoria/derrota, "Nuevo Duelo" y "Volver al Salón". El texto de ayuda sale del `GameDef` activo (`game.hint`), así cada juego explica el suyo.
+Tablero PixiJS + **HUD**: subtítulo del Duelo (ej. "Rival Menor · Duelo 1/3"), **oro**, barra de Presión (actual/meta), turnos (usados/límite), **chips de Estandartes** equipados (tooltip con su efecto), **desglose de la última jugada** (`Base × Mult = total` con sus notas: "Captura: Torre +5 base", "🏹 Cazador +2 mult", "Cadena de 3 ×3 mult"…), banner de victoria/derrota, y al terminar un botón **Continuar →** (a la tienda o al resultado). El texto de ayuda sale del `GameDef` activo (`game.hint`), así cada juego explica el suyo.
 
 ### Compendio (`CompendiumScreen`)
 - **Chips de estadísticas:** descubierto X/Y, duelos ganados/perdidos.

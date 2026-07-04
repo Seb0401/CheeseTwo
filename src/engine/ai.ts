@@ -1,5 +1,5 @@
 import { BOARD_SIZE, fileOf, rankOf } from './geometry';
-import { Color, DuelState, GameDef, Move } from './types';
+import { capturesOf, Color, DuelState, GameDef, Move } from './types';
 
 /**
  * Rival del MVP: heurística voraz y DETERMINISTA (para replays/PvP futuro),
@@ -21,8 +21,9 @@ export function chooseAiMove(game: GameDef, state: DuelState, color: Color): Mov
 
   moves.forEach((move, i) => {
     let score = 0;
-    if (move.captured) {
-      const info = game.pieces[move.captured.type];
+    // Suma el valor de todo lo capturado (una cadena de damas cuenta cada salto).
+    for (const cap of capturesOf(move)) {
+      const info = game.pieces[cap.type];
       score += info?.objective ? 1000 : (info?.captureValue ?? 0) * 10;
     }
     // Preferencia leve por acercarse al centro del tablero.

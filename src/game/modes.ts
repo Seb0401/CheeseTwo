@@ -2,7 +2,7 @@
 // Contenido de UI dirigido por datos: la Preparación de Run y el Compendio
 // se dibujan desde aquí. Ver docs/09 (juegos) y docs/10 (interfaz).
 
-import { CHESS, GameDef } from '../engine';
+import { Board, CHESS, DAMAS, GameDef, toIndex } from '../engine';
 
 export type ModeStatus = 'playable' | 'locked';
 
@@ -29,12 +29,12 @@ export const MODES: ModeInfo[] = [
     game: CHESS,
   },
   {
-    id: 'damas',
-    name: 'Damas',
+    id: DAMAS.id,
+    name: DAMAS.name,
     icon: '⛃',
     tagline: 'Cadenas de captura como combos que disparan el mult.',
-    status: 'locked',
-    unlockHint: 'Se desbloquea al ganar tu primer run de Ajedrez.',
+    status: 'playable',
+    game: DAMAS,
   },
   {
     id: 'ludo',
@@ -53,9 +53,18 @@ export interface ArmyInfo {
   description: string;
   status: 'playable' | 'locked';
   unlockHint?: string;
+  /** Si se define, el ejército solo aplica a ese modo. Sin definir = universal. */
+  gameId?: string;
+  /** Transforma el tablero inicial del juego (solo el bando del jugador). */
+  apply?: (board: Board) => Board;
 }
 
-/** Ejércitos iniciales ("barajas", ver docs/06). Hito 0: solo Clásico es funcional. */
+/** Ejércitos que tienen sentido para un modo (los universales + los suyos). */
+export function armiesForMode(modeId: string): ArmyInfo[] {
+  return ARMIES.filter((a) => !a.gameId || a.gameId === modeId);
+}
+
+/** Ejércitos iniciales ("barajas", ver docs/06). */
 export const ARMIES: ArmyInfo[] = [
   {
     id: 'clasico',
@@ -63,6 +72,26 @@ export const ARMIES: ArmyInfo[] = [
     icon: '♜',
     description: 'El set estándar. Balanceado, para aprender.',
     status: 'playable',
+  },
+  {
+    id: 'heretico',
+    name: 'Herético',
+    icon: '⚜',
+    description:
+      'Tu flanco de dama se corrompe: Canciller (torre+caballo), Saltamontes y Arzobispo (alfil+caballo) sustituyen a torre, caballo y alfil.',
+    status: 'playable',
+    gameId: 'chess',
+    apply: (board) => {
+      const next = board.slice();
+      const swap = (sq: number, type: string) => {
+        const piece = next[sq];
+        if (piece && piece.color === 'white') next[sq] = { ...piece, type };
+      };
+      swap(toIndex(0, 0), 'chancellor'); // a1: torre → Canciller
+      swap(toIndex(1, 0), 'grasshopper'); // b1: caballo → Saltamontes
+      swap(toIndex(2, 0), 'archbishop'); // c1: alfil → Arzobispo
+      return next;
+    },
   },
   {
     id: 'enjambre',

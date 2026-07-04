@@ -1,5 +1,6 @@
-import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
 import { Board, fileOf, Piece, rankOf, SquareIndex, toIndex } from '../engine';
+import { drawPiece } from './pieces';
 
 const SQUARE = 72;
 const LIGHT = 0xead9b8;
@@ -9,8 +10,8 @@ const TARGET = 0x84c084;
 
 export interface BoardViewCallbacks {
   onSquareClick: (sq: SquareIndex) => void;
-  /** Glifo con el que dibujar cada pieza; lo aporta el GameDef activo. */
-  glyphFor: (piece: Piece) => string;
+  /** Clave del emblema a dibujar (normalmente el tipo; damas distingue su rey). */
+  emblemKeyFor: (piece: Piece) => string;
 }
 
 /**
@@ -79,17 +80,10 @@ export class BoardView {
     for (let sq = 0; sq < board.length; sq++) {
       const piece = board[sq];
       if (!piece) continue;
-      const text = new Text({
-        text: this.cb.glyphFor(piece),
-        style: new TextStyle({
-          fontSize: SQUARE * 0.82,
-          fill: piece.color === 'white' ? 0xffffff : 0x111111,
-        }),
-      });
-      text.anchor.set(0.5);
-      text.x = fileOf(sq) * SQUARE + SQUARE / 2;
-      text.y = this.screenY(rankOf(sq)) + SQUARE / 2;
-      this.piecesLayer.addChild(text);
+      const sprite = drawPiece(piece.type, piece.color, SQUARE, this.cb.emblemKeyFor(piece));
+      sprite.x = fileOf(sq) * SQUARE + SQUARE / 2;
+      sprite.y = this.screenY(rankOf(sq)) + SQUARE / 2;
+      this.piecesLayer.addChild(sprite);
     }
   }
 

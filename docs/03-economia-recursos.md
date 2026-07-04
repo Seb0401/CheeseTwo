@@ -2,6 +2,8 @@
 
 Inspirado en la "sopa de cartas" de Balatro (dinero, planetas, tarots, jokers, espectros), pero cada recurso mapea a algo del ajedrez. La regla de oro: **cada recurso debe tener un rol distinto y no pisarse con otro.**
 
+> **Estado (Hito 1 en curso):** el bucle económico ya es jugable en un **mini-run de 3 Duelos** con **Tienda** entre cada uno. Implementado: **Oro** (se gana por Duelo, escalado por superar la meta), compra de **Estandartes** con slots limitados, **reroll**, y la **Forja** (ver abajo). Pendiente: Planetas, Tarots, Espectros, Tickets e intereses.
+
 ---
 
 ## Tabla resumen
@@ -29,6 +31,15 @@ Recurso de aporte propio para diferenciarse. Propuesta de rol: **"favores del de
 - Se ganan raramente (Jefes, eventos, logros de run).
 - Sirven para: **reroll garantizado** de la tienda, abrir un **pack de rareza alta**, o **rescatar** un run (revivir una pieza clave / saltar una cláusula de Jefe).
 - Decisión abierta: ¿son de *run* (se reinician) o de *meta* (se acumulan entre partidas para desbloqueos)? → Recomiendo **meta**, para no inflar la economía dentro del run.
+
+## Forja ⚒️ — cambiar fichas por CASTA (implementado)
+
+La Forja de la Tienda deja **cambiar una ficha de tu ejército por otra de su misma casta**, pagando oro. Es la vía barata para meter piezas heréticas y raras en tu build sin romper el equilibrio.
+
+- **Casta = rango de pieza** (Infantería, Menor, Mayor, Élite). Ver [04](04-piezas-poderes-clases.md#castas).
+- **Regla clave:** solo se forja dentro de la misma casta. Un Peón (Infantería) puede volverse Berolina, pero **nunca** una Dama por mucho oro que tengas — así el oro compra *variedad y sinergia*, no *poder bruto*.
+- El coste sube con la casta (Infantería 2 → Menor 4 → Mayor 6 → Élite 9). El Rey no es forjable.
+- No pisa a los **Tarots** (que transforman una pieza a otra cosa vía magia/azar): la Forja es una compra directa y acotada; los Tarots serán intervenciones más raras y potentes.
 
 ## Cartas Planeta 🪐 — mejoran TIPOS de pieza
 

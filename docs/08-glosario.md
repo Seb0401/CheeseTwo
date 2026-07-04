@@ -16,7 +16,11 @@
 | **Acto** | grupo de Duelos que termina en un Jefe |
 | **Clase** | arquetipo/loadout de poderes de una pieza |
 | **Poder** | habilidad concreta de una pieza |
-| **Estandarte** | nombre propuesto para las cartas tipo "Joker" |
+| **Estandarte** | las cartas tipo "Joker": bonus de base/mult condicionados a la jugada (6 implementados) |
+| **Tienda** | pantalla entre Duelos: comprar Estandartes, forjar fichas, rerollar |
+| **Casta** | rango de pieza (Infantería/Menor/Mayor/Élite); agrupa fichas de poder similar |
+| **Forja** | cambiar una ficha por otra de su misma casta pagando oro (ver [03](03-economia-recursos.md)) |
+| **Pieza herética** | pieza no clásica coleccionable (Canciller, Arzobispo, Saltamontes, Camello, Cañón, Amazona, Berolina) |
 | **Ejército inicial** | equivalente a una "baraja" de Balatro |
 | **Corona** | nivel de dificultad ascendente |
 | **El Salón** | menú principal del salón de juegos; ver [10](10-interfaz.md) |
