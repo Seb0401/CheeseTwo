@@ -263,7 +263,9 @@ describe('estandartes: puntaje', () => {
     const forChess = bannersForGame('chess');
     const forDamas = bannersForGame('damas');
     expect(forChess.length).toBeGreaterThan(forDamas.length);
-    expect(forDamas.every((b) => !b.gameId)).toBe(true);
+    // Un Estandarte ofrecido en damas es universal o específico de damas (nunca de ajedrez).
+    expect(forDamas.every((b) => !b.gameId || b.gameId === 'damas')).toBe(true);
+    expect(forChess.some((b) => b.gameId === 'chess')).toBe(true);
   });
 });
 

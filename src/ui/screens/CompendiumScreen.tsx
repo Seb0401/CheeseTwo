@@ -1,16 +1,16 @@
 // El Compendio: la colección compartida entre modos (estilo Balatro).
 // Lo no descubierto se muestra como silueta "?" — jugar es lo que revela.
 
-import { GameDef } from '../../engine';
-import { isDiscovered, MetaState } from '../../game/meta';
-import { MODES } from '../../game/modes';
+import { BANNERS, GameDef } from '../../engine';
+import { isDiscovered, isUnlocked, MetaState } from '../../game/meta';
+import { ARMIES, MODES } from '../../game/modes';
 
 interface CompendiumScreenProps {
   meta: MetaState;
   onBack: () => void;
 }
 
-/** Ranura misteriosa para categorías que aún no existen (Estandartes, etc.). */
+/** Ranura misteriosa para piezas aún no descubiertas. */
 function MysterySlot({ label }: { label: string }) {
   return (
     <div className="piece-card unknown">
@@ -47,6 +47,7 @@ export function CompendiumScreen({ meta, onBack }: CompendiumScreenProps) {
   const playableModes = MODES.filter((m) => m.game);
   const totalPieces = playableModes.reduce((n, m) => n + Object.keys(m.game!.pieces).length, 0);
   const discovered = meta.discovered.length;
+  const banners = Object.values(BANNERS);
 
   return (
     <main className="screen">
@@ -62,10 +63,10 @@ export function CompendiumScreen({ meta, onBack }: CompendiumScreenProps) {
           Descubierto: <strong>{discovered}</strong> / {totalPieces}
         </span>
         <span className="chip">
-          Duelos ganados: <strong>{meta.duelsWon}</strong>
+          Runs ganados: <strong>{meta.runsWon}</strong>
         </span>
         <span className="chip">
-          Duelos perdidos: <strong>{meta.duelsLost}</strong>
+          Duelos G/P: <strong>{meta.duelsWon}</strong> / {meta.duelsLost}
         </span>
       </div>
 
@@ -76,11 +77,25 @@ export function CompendiumScreen({ meta, onBack }: CompendiumScreenProps) {
             <div key={m.id} className={`select-card static ${m.status === 'locked' ? 'locked' : ''}`}>
               <span className="card-icon">{m.status === 'locked' ? '🔒' : m.icon}</span>
               <span className="card-name">{m.name}</span>
-              <span className="card-desc">
-                {m.status === 'locked' ? m.unlockHint : m.tagline}
-              </span>
+              <span className="card-desc">{m.status === 'locked' ? m.unlockHint : m.tagline}</span>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section>
+        <h3 className="section-title">Ejércitos</h3>
+        <div className="card-row">
+          {ARMIES.map((a) => {
+            const locked = !isUnlocked(meta, a.unlockId);
+            return (
+              <div key={a.id} className={`select-card static ${locked ? 'locked' : ''}`}>
+                <span className="card-icon">{locked ? '🔒' : a.icon}</span>
+                <span className="card-name">{a.name}</span>
+                <span className="card-desc">{locked ? a.unlockHint : a.description}</span>
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -92,10 +107,14 @@ export function CompendiumScreen({ meta, onBack }: CompendiumScreenProps) {
       ))}
 
       <section>
-        <h3 className="section-title">Estandartes (Jokers)</h3>
+        <h3 className="section-title">Estandartes ({banners.length})</h3>
         <div className="card-row">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <MysterySlot key={n} label="Llegan en el Hito 1" />
+          {banners.map((b) => (
+            <div key={b.id} className="piece-card">
+              <span className="piece-glyph">{b.icon}</span>
+              <span className="piece-name">{b.name}</span>
+              <span className="piece-sub">{b.description}</span>
+            </div>
           ))}
         </div>
       </section>

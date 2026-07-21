@@ -5,7 +5,14 @@
 
 import { useCallback, useState } from 'react';
 import { Board, GameDef, PieceType } from '../engine';
-import { discoverPieces, loadMeta, MetaState, recordDuel, saveMeta } from '../game/meta';
+import {
+  discoverPieces,
+  loadMeta,
+  MetaState,
+  recordDuel,
+  recordRunWin,
+  saveMeta,
+} from '../game/meta';
 import { ArmyInfo } from '../game/modes';
 import { CompendiumScreen } from './screens/CompendiumScreen';
 import { RunScreen } from './screens/RunScreen';
@@ -16,7 +23,7 @@ type Screen =
   | { name: 'salon' }
   | { name: 'setup' }
   | { name: 'compendio' }
-  | { name: 'run'; game: GameDef; board: Board };
+  | { name: 'run'; game: GameDef; army: ArmyInfo; board: Board; seed: number };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'salon' });
@@ -34,7 +41,7 @@ export function App() {
   const startRun = useCallback((game: GameDef, army: ArmyInfo) => {
     const base = game.createInitialBoard();
     const board = army.apply ? army.apply(base) : base;
-    setScreen({ name: 'run', game, board });
+    setScreen({ name: 'run', game, army, board, seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0 });
   }, []);
 
   const discover = useCallback(
@@ -55,7 +62,13 @@ export function App() {
         />
       );
     case 'setup':
-      return <RunSetupScreen onStart={startRun} onBack={() => setScreen({ name: 'salon' })} />;
+      return (
+        <RunSetupScreen
+          meta={meta}
+          onStart={startRun}
+          onBack={() => setScreen({ name: 'salon' })}
+        />
+      );
     case 'compendio':
       return <CompendiumScreen meta={meta} onBack={() => setScreen({ name: 'salon' })} />;
     case 'run':
@@ -63,9 +76,13 @@ export function App() {
         <RunScreen
           game={screen.game}
           initialBoard={screen.board}
+          seed={screen.seed}
+          goldBonus={screen.army.startingGoldBonus}
           onDiscoverPieces={discover}
           onRecordDuel={recordDuelResult}
-          onRunEnd={() => {}}
+          onRunEnd={(won) => {
+            if (won) updateMeta((m) => recordRunWin(m, screen.game.id, screen.army.id));
+          }}
           onExit={() => setScreen({ name: 'salon' })}
         />
       );

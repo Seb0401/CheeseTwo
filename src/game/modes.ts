@@ -51,10 +51,14 @@ export interface ArmyInfo {
   name: string;
   icon: string;
   description: string;
-  status: 'playable' | 'locked';
+  /** Id de desbloqueo; sin definir = disponible desde el inicio. Ver meta.ts. */
+  unlockId?: string;
+  /** Pista mostrada mientras está bloqueado. */
   unlockHint?: string;
   /** Si se define, el ejército solo aplica a ese modo. Sin definir = universal. */
   gameId?: string;
+  /** Oro inicial extra que otorga (Mercader). */
+  startingGoldBonus?: number;
   /** Transforma el tablero inicial del juego (solo el bando del jugador). */
   apply?: (board: Board) => Board;
 }
@@ -64,6 +68,12 @@ export function armiesForMode(modeId: string): ArmyInfo[] {
   return ARMIES.filter((a) => !a.gameId || a.gameId === modeId);
 }
 
+/** Cambia el tipo de una pieza blanca en una casilla (helper de `apply`). */
+function swapWhite(board: Board, sq: number, type: string): void {
+  const p = board[sq];
+  if (p && p.color === 'white') board[sq] = { ...p, type };
+}
+
 /** Ejércitos iniciales ("barajas", ver docs/06). */
 export const ARMIES: ArmyInfo[] = [
   {
@@ -71,7 +81,6 @@ export const ARMIES: ArmyInfo[] = [
     name: 'Clásico',
     icon: '♜',
     description: 'El set estándar. Balanceado, para aprender.',
-    status: 'playable',
   },
   {
     id: 'heretico',
@@ -79,17 +88,12 @@ export const ARMIES: ArmyInfo[] = [
     icon: '⚜',
     description:
       'Tu flanco de dama se corrompe: Canciller (torre+caballo), Saltamontes y Arzobispo (alfil+caballo) sustituyen a torre, caballo y alfil.',
-    status: 'playable',
     gameId: 'chess',
     apply: (board) => {
       const next = board.slice();
-      const swap = (sq: number, type: string) => {
-        const piece = next[sq];
-        if (piece && piece.color === 'white') next[sq] = { ...piece, type };
-      };
-      swap(toIndex(0, 0), 'chancellor'); // a1: torre → Canciller
-      swap(toIndex(1, 0), 'grasshopper'); // b1: caballo → Saltamontes
-      swap(toIndex(2, 0), 'archbishop'); // c1: alfil → Arzobispo
+      swapWhite(next, toIndex(0, 0), 'chancellor'); // a1: torre → Canciller
+      swapWhite(next, toIndex(1, 0), 'grasshopper'); // b1: caballo → Saltamontes
+      swapWhite(next, toIndex(2, 0), 'archbishop'); // c1: alfil → Arzobispo
       return next;
     },
   },
@@ -97,24 +101,48 @@ export const ARMIES: ArmyInfo[] = [
     id: 'enjambre',
     name: 'Enjambre',
     icon: '♟',
-    description: 'Menos piezas mayores, más peones y caballos.',
-    status: 'locked',
+    description: 'Dama y torres se vuelven caballos: 5 caballos, sin piezas mayores.',
+    gameId: 'chess',
+    unlockId: 'enjambre',
     unlockHint: 'Gana tu primer run.',
+    apply: (board) => {
+      const next = board.slice();
+      swapWhite(next, toIndex(0, 0), 'knight'); // a1: torre → Caballo
+      swapWhite(next, toIndex(7, 0), 'knight'); // h1: torre → Caballo
+      swapWhite(next, toIndex(3, 0), 'knight'); // d1: dama → Caballo
+      return next;
+    },
   },
   {
     id: 'realeza',
     name: 'Realeza',
     icon: '♛',
-    description: 'Dama mejorada pero pocas piezas. Alto riesgo.',
-    status: 'locked',
+    description: 'Tu dama se vuelve Amazona (dama+caballo), pero pierdes ambos caballos. Alto riesgo.',
+    gameId: 'chess',
+    unlockId: 'realeza',
     unlockHint: 'Gana un run con el Enjambre.',
+    apply: (board) => {
+      const next = board.slice();
+      swapWhite(next, toIndex(3, 0), 'amazon'); // d1: dama → Amazona
+      next[toIndex(1, 0)] = null; // b1: sin caballo
+      next[toIndex(6, 0)] = null; // g1: sin caballo
+      return next;
+    },
   },
   {
     id: 'mercader',
     name: 'Mercader',
     icon: '⛁',
-    description: 'Más oro inicial, ejército débil. Build económica.',
-    status: 'locked',
-    unlockHint: 'Acumula 100 de oro en un run.',
+    description: 'Ejército más débil (sin una torre y un alfil) pero +6 de oro inicial.',
+    gameId: 'chess',
+    unlockId: 'mercader',
+    unlockHint: 'Gana un run con Realeza.',
+    startingGoldBonus: 6,
+    apply: (board) => {
+      const next = board.slice();
+      next[toIndex(0, 0)] = null; // a1: sin torre
+      next[toIndex(2, 0)] = null; // c1: sin alfil
+      return next;
+    },
   },
 ];

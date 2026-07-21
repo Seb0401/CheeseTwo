@@ -3,8 +3,10 @@ import {
   discoverPieces,
   emptyMeta,
   isDiscovered,
+  isUnlocked,
   loadMeta,
   recordDuel,
+  recordRunWin,
   saveMeta,
 } from './meta';
 
@@ -56,5 +58,35 @@ describe('meta: persistencia', () => {
     expect(loadMeta(null)).toEqual(emptyMeta());
     expect(loadMeta({ getItem: () => '{{{' })).toEqual(emptyMeta());
     expect(loadMeta({ getItem: () => '{"version":99}' })).toEqual(emptyMeta());
+  });
+});
+
+describe('meta: desbloqueos por victoria de run', () => {
+  it('la primera victoria desbloquea Enjambre; ganar con Enjambre desbloquea Realeza', () => {
+    let meta = emptyMeta();
+    expect(isUnlocked(meta, 'enjambre')).toBe(false);
+
+    meta = recordRunWin(meta, 'chess', 'clasico');
+    expect(meta.runsWon).toBe(1);
+    expect(isUnlocked(meta, 'enjambre')).toBe(true);
+    expect(isUnlocked(meta, 'realeza')).toBe(false);
+
+    meta = recordRunWin(meta, 'chess', 'enjambre');
+    expect(isUnlocked(meta, 'realeza')).toBe(true);
+    expect(isUnlocked(meta, 'mercader')).toBe(false);
+
+    meta = recordRunWin(meta, 'chess', 'realeza');
+    expect(isUnlocked(meta, 'mercader')).toBe(true);
+    expect(meta.runsWon).toBe(3);
+  });
+
+  it('isUnlocked es verdadero para contenido sin id de desbloqueo', () => {
+    expect(isUnlocked(emptyMeta(), undefined)).toBe(true);
+  });
+
+  it('no duplica desbloqueos al repetir victorias', () => {
+    let meta = recordRunWin(emptyMeta(), 'chess', 'clasico');
+    meta = recordRunWin(meta, 'chess', 'clasico');
+    expect(meta.unlocks.filter((u) => u === 'enjambre')).toHaveLength(1);
   });
 });

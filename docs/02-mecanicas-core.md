@@ -67,13 +67,18 @@ Un Duelo no es una partida completa hasta el mate; es un **escenario acotado**:
 
 ### Cláusulas de Jefe (equivalente a boss blinds)
 
-Ideas iniciales:
-- **"Ley marcial":** tus peones no generan Presión.
+Implementadas ✅ (aleatoria por run, con semilla; se anuncia en la Tienda previa y en el HUD del Jefe — `src/engine/clauses.ts`):
+- **"Ley marcial"** ✅: tus peones no generan Presión.
+- **"Gravedad"** ✅: no puedes mover a la misma pieza dos turnos seguidos.
+- **"Fortaleza"** ✅: el Jefe empieza con 2 torres extra protegiendo a su rey.
+- **"Maldición arcana"** ✅: tus Estandartes rinden la mitad.
+
+Ideas pendientes:
 - **"Niebla":** no ves las piezas del rival hasta que están adyacentes.
-- **"Fortaleza":** el rey rival empieza enrocado y con dos torres extra.
 - **"Impuesto de sangre":** cada captura que haces cura una pieza del rival.
-- **"Gravedad":** no puedes mover a la misma pieza dos turnos seguidos.
 - **"Espejo":** el rival copia tu última jugada si es legal.
+
+> Cada cláusula engancha uno de tres puntos del motor: puntaje (`adjustScore`), movimiento (`filterMoves`) o tablero inicial (`setupBoard`). Añadir una cláusula = añadir una entrada al registro.
 
 Las cláusulas fuerzan a **cambiar la build**, que es el corazón de la rejugabilidad.
 

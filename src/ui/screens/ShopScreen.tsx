@@ -2,7 +2,7 @@
 // (cambiarlas por otras de su misma casta). Ver docs/10-interfaz.md.
 
 import { useMemo, useState } from 'react';
-import { Banner, GameDef, PieceType } from '../../engine';
+import { Banner, Clause, GameDef, PieceType } from '../../engine';
 import { CASTAS } from '../../game/castas';
 import {
   BANNER_COST,
@@ -24,6 +24,8 @@ interface ShopScreenProps {
   totalDuels: number;
   /** Semilla de la oferta (cambia al rerollar). */
   offerSeed: number;
+  /** Cláusula del Jefe, si el siguiente Duelo es el Jefe (para avisar). */
+  bossClause?: Clause;
   onBuyBanner: (banner: Banner) => void;
   onReroll: () => void;
   onForge: (rosterIndex: number, newType: PieceType) => void;
@@ -38,6 +40,7 @@ export function ShopScreen({
   duelNumber,
   totalDuels,
   offerSeed,
+  bossClause,
   onBuyBanner,
   onReroll,
   onForge,
@@ -77,6 +80,15 @@ export function ShopScreen({
         Siguiente: <strong>{nextPlan.label}</strong> · Duelo {duelNumber}/{totalDuels} · meta{' '}
         {nextPlan.target} de Presión.
       </p>
+
+      {bossClause && (
+        <div className="clause-warning">
+          <span className="clause-title">
+            ⚠️ {bossClause.icon} Cláusula del Jefe: {bossClause.name}
+          </span>
+          <span className="clause-desc">{bossClause.description} — prepara tu build en consecuencia.</span>
+        </div>
+      )}
 
       <section>
         <h3 className="section-title">Estandartes ({run.banners.length}/{run.bannerSlots})</h3>

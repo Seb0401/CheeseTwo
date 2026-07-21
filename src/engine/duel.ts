@@ -1,3 +1,4 @@
+import { CLAUSES } from './clauses';
 import { scoreMove } from './scoring';
 import {
   Board,
@@ -17,6 +18,8 @@ export interface DuelConfig {
   banners?: string[];
   /** Tablero inicial alternativo (ejércitos iniciales lo modifican). */
   board?: Board;
+  /** Cláusula de Jefe activa (id). */
+  clause?: string;
 }
 
 export function createDuel(game: GameDef, config: DuelConfig = {}): DuelState {
@@ -31,6 +34,7 @@ export function createDuel(game: GameDef, config: DuelConfig = {}): DuelState {
     status: 'playing',
     banners: config.banners ?? [],
     lastScore: null,
+    clause: config.clause,
   };
 }
 
@@ -42,12 +46,17 @@ export function defaultApplyToBoard(board: Board, move: Move): Board {
   return next;
 }
 
-/** Movimientos jugables desde una casilla, respetando el turno y el estado. */
+/** Movimientos jugables desde una casilla, respetando el turno, el estado y la cláusula. */
 export function legalMovesFrom(game: GameDef, state: DuelState, from: SquareIndex): Move[] {
   if (state.status !== 'playing') return [];
   const piece = state.board[from];
   if (!piece || piece.color !== state.turn) return [];
-  return game.movesFrom(state.board, from);
+  let moves = game.movesFrom(state.board, from);
+  // Las cláusulas solo estorban al jugador (blancas), no al rival.
+  if (state.clause && piece.color === 'white') {
+    moves = CLAUSES[state.clause]?.filterMoves?.(state, from, moves) ?? moves;
+  }
+  return moves;
 }
 
 /**
@@ -63,10 +72,12 @@ export function applyMove(game: GameDef, state: DuelState, move: Move): DuelStat
   // Puntuar ANTES de aplicar al tablero (los efectos ven la pieza en su origen).
   let pressure = state.pressure;
   let lastScore = state.lastScore;
+  let lastPlayerTo = state.lastPlayerTo;
   if (mover === 'white') {
     const score = scoreMove(game, state, move);
     pressure += score.total;
     lastScore = score;
+    lastPlayerTo = move.to; // para la cláusula Gravedad
   }
 
   const board = (game.applyToBoard ?? defaultApplyToBoard)(state.board, move);
@@ -94,5 +105,5 @@ export function applyMove(game: GameDef, state: DuelState, move: Move): DuelStat
     }
   }
 
-  return { ...state, board, turn: nextTurn, pressure, turnsUsed, status, lastScore };
+  return { ...state, board, turn: nextTurn, pressure, turnsUsed, status, lastScore, lastPlayerTo };
 }

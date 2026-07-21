@@ -8,10 +8,40 @@ export interface MetaState {
   discovered: string[];
   duelsWon: number;
   duelsLost: number;
+  /** Runs ganados (venciste al Jefe). */
+  runsWon: number;
+  /** Contenido desbloqueado (ids de ejércitos, etc.). */
+  unlocks: string[];
 }
 
 export function emptyMeta(): MetaState {
-  return { version: 1, discovered: [], duelsWon: 0, duelsLost: 0 };
+  return { version: 1, discovered: [], duelsWon: 0, duelsLost: 0, runsWon: 0, unlocks: [] };
+}
+
+/**
+ * Reglas de desbloqueo al GANAR un run. Cada regla, si su condición se cumple,
+ * concede un desbloqueo (id de ejército). Encadena: ganar con un ejército
+ * desbloquea el siguiente. Data-driven: añadir contenido = añadir una regla.
+ */
+const RUN_WIN_UNLOCKS: { when: (gameId: string, armyId: string) => boolean; grant: string }[] = [
+  { when: () => true, grant: 'enjambre' }, // cualquier victoria
+  { when: (_g, a) => a === 'enjambre', grant: 'realeza' },
+  { when: (_g, a) => a === 'realeza', grant: 'mercader' },
+];
+
+/** Registra un run ganado: suma la victoria y concede los desbloqueos que toquen. */
+export function recordRunWin(meta: MetaState, gameId: string, armyId: string): MetaState {
+  let unlocks = meta.unlocks;
+  for (const rule of RUN_WIN_UNLOCKS) {
+    if (rule.when(gameId, armyId) && !unlocks.includes(rule.grant)) {
+      unlocks = [...unlocks, rule.grant];
+    }
+  }
+  return { ...meta, runsWon: meta.runsWon + 1, unlocks };
+}
+
+export function isUnlocked(meta: MetaState, unlockId: string | undefined): boolean {
+  return !unlockId || meta.unlocks.includes(unlockId);
 }
 
 export function discoveryKey(gameId: string, pieceType: string): string {
@@ -43,9 +73,13 @@ export function loadMeta(storage: Pick<Storage, 'getItem'> | null = defaultStora
   try {
     const raw = storage?.getItem(STORAGE_KEY);
     if (!raw) return emptyMeta();
-    const parsed = JSON.parse(raw) as MetaState;
+    const parsed = JSON.parse(raw) as Partial<MetaState>;
     if (parsed.version !== 1 || !Array.isArray(parsed.discovered)) return emptyMeta();
-    return { ...emptyMeta(), ...parsed };
+    const meta = { ...emptyMeta(), ...parsed };
+    // Sanea campos añadidos en versiones nuevas por si el guardado es antiguo.
+    if (!Array.isArray(meta.unlocks)) meta.unlocks = [];
+    if (typeof meta.runsWon !== 'number') meta.runsWon = 0;
+    return meta;
   } catch {
     return emptyMeta();
   }

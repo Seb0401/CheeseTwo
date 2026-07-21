@@ -1,4 +1,4 @@
-import { BANNERS, DuelState, GameDef } from '../engine';
+import { BANNERS, CLAUSES, DuelState, GameDef } from '../engine';
 
 interface HudProps {
   game: GameDef;
@@ -16,6 +16,7 @@ interface HudProps {
 export function Hud({ game, state, title, gold, onContinue, onExit, exitLabel }: HudProps) {
   const pct = Math.min(100, Math.round((state.pressure / state.target) * 100));
   const banners = state.banners.map((id) => BANNERS[id]).filter(Boolean);
+  const clause = state.clause ? CLAUSES[state.clause] : undefined;
   const score = state.lastScore;
   const ended = state.status !== 'playing';
 
@@ -48,6 +49,15 @@ export function Hud({ game, state, title, gold, onContinue, onExit, exitLabel }:
           {state.turnsUsed} / {state.turnLimit}
         </strong>
       </div>
+
+      {clause && (
+        <div className="clause-box" title={clause.description}>
+          <span className="clause-title">
+            {clause.icon} Cláusula: {clause.name}
+          </span>
+          <span className="clause-desc">{clause.description}</span>
+        </div>
+      )}
 
       {banners.length > 0 && (
         <div className="hud-banners">

@@ -3,7 +3,16 @@
 // La lógica pura vive en src/game/run.ts; aquí solo va el pegamento de React.
 
 import { useCallback, useMemo, useState } from 'react';
-import { Banner, Board, createRng, DuelConfig, DuelState, GameDef, PieceType } from '../../engine';
+import {
+  Banner,
+  Board,
+  CLAUSES,
+  createRng,
+  DuelConfig,
+  DuelState,
+  GameDef,
+  PieceType,
+} from '../../engine';
 import {
   BANNER_COST,
   buildDuelBoard,
@@ -12,6 +21,7 @@ import {
   duelReward,
   forgeCost,
   forgePiece,
+  isBossDuel,
   REROLL_COST,
   rosterTypes,
   RUN_PLANS,
@@ -23,6 +33,10 @@ interface RunScreenProps {
   game: GameDef;
   /** Tablero inicial (ya con el ejército aplicado). */
   initialBoard: Board;
+  /** Semilla del run (fija la cláusula del Jefe). */
+  seed: number;
+  /** Oro inicial extra del ejército (Mercader). */
+  goldBonus?: number;
   onDiscoverPieces: (gameId: string, types: PieceType[]) => void;
   onRecordDuel: (won: boolean) => void;
   onRunEnd: (won: boolean) => void;
@@ -34,12 +48,14 @@ type Phase = 'shop' | 'duel' | 'result';
 export function RunScreen({
   game,
   initialBoard,
+  seed,
+  goldBonus = 0,
   onDiscoverPieces,
   onRecordDuel,
   onRunEnd,
   onExit,
 }: RunScreenProps) {
-  const [run, setRun] = useState(() => createRun(game, initialBoard));
+  const [run, setRun] = useState(() => createRun(game, initialBoard, seed, goldBonus));
   const [phase, setPhase] = useState<Phase>('shop');
   const [rerolls, setRerolls] = useState(0);
   const [outcome, setOutcome] = useState<'won' | 'lost' | null>(null);
@@ -75,14 +91,18 @@ export function RunScreen({
 
   // ── Transiciones Duelo ──────────────────────────────────────────────────────
   const startDuel = useCallback(() => {
-    const seed = 1000 + run.duelIndex * 97;
-    const board = buildDuelBoard(game, run.roster, plan, createRng(seed));
+    const duelSeed = 1000 + run.duelIndex * 97;
+    let board = buildDuelBoard(game, run.roster, plan, createRng(duelSeed));
+    // El Jefe aplica su cláusula: puede transformar el tablero inicial.
+    const boss = isBossDuel(run) ? run.clauseId : undefined;
+    if (boss) board = CLAUSES[boss]?.setupBoard?.(board) ?? board;
     onDiscoverPieces(game.id, rosterTypes(run));
     setDuelConfig({
       board,
       banners: run.banners,
       target: plan.target,
       turnLimit: plan.turnLimit,
+      clause: boss,
     });
     setOutcome(null);
     setPhase('duel');
@@ -113,6 +133,8 @@ export function RunScreen({
   }, [outcome, isLast, onRunEnd]);
 
   const offerSeed = useMemo(() => run.duelIndex * 100 + rerolls, [run.duelIndex, rerolls]);
+  // La cláusula solo se revela en la Tienda previa al Jefe (y en su Duelo).
+  const bossClause = isBossDuel(run) && run.clauseId ? CLAUSES[run.clauseId] : undefined;
 
   if (phase === 'shop') {
     return (
@@ -123,6 +145,7 @@ export function RunScreen({
         duelNumber={run.duelIndex + 1}
         totalDuels={RUN_PLANS.length}
         offerSeed={offerSeed}
+        bossClause={bossClause}
         onBuyBanner={buyBanner}
         onReroll={reroll}
         onForge={forge}

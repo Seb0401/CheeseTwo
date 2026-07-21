@@ -489,3 +489,39 @@ body {
   text-align: center;
   padding-top: 80px;
 }
+
+/* ─── Cláusulas de Jefe ─── */
+
+.clause-box,
+.clause-warning {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(216, 88, 88, 0.14);
+  border: 1px solid rgba(216, 88, 88, 0.45);
+}
+
+.clause-warning {
+  margin: 14px 0 4px;
+  background: rgba(216, 120, 60, 0.16);
+  border-color: rgba(216, 140, 70, 0.5);
+}
+
+.clause-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #f0b0a3;
+}
+
+.clause-warning .clause-title {
+  color: #f0c49a;
+}
+
+.clause-desc {
+  font-size: 12px;
+  opacity: 0.8;
+  line-height: 1.4;
+}

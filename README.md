@@ -61,9 +61,11 @@ El motor es **multi-juego**: el núcleo (Duelo, Presión, IA) es agnóstico y ca
 Interfaz ([docs/10](docs/10-interfaz.md)): **Salón** → **Preparación de Run** (modo + ejército) → **Tienda ↔ Duelo** ×3 → **Resultado**, más el **Compendio** estilo Balatro donde las piezas se *descubren* jugando (persistencia en localStorage).
 
 Contenido y sistemas ya jugables:
-- **6 Estandartes** (jokers) con efectos `Base × Mult` data-driven (`src/engine/banners.ts`); el HUD muestra el **desglose de cada jugada**.
+- **11 Estandartes** (jokers) con efectos `Base × Mult` data-driven (`src/engine/banners.ts`), varios con sinergias (heréticas, cadenas de damas); el HUD muestra el **desglose de cada jugada**.
+- **Cláusulas de Jefe** (`src/engine/clauses.ts`): el 3er Duelo trae una regla aleatoria que te estorba (Ley marcial, Gravedad, Fortaleza, Maldición arcana), anunciada en la Tienda previa.
 - **Piezas heréticas** coleccionables: Canciller, Arzobispo, Saltamontes, Camello, Cañón, Amazona y Berolina.
 - **Castas** (Infantería/Menor/Mayor/Élite) y la **Forja**: cambias una ficha por otra **de su misma casta** pagando oro — un peón nunca se vuelve dama.
+- **Progresión meta** (localStorage): ganar runs desbloquea ejércitos en cadena (Enjambre → Realeza → Mercader), cada uno con efecto real. El **Compendio** muestra runs ganados, ejércitos y los 11 Estandartes.
 - **Fichas low-poly**: piezas vectoriales facetadas (moneda con luz/sombra + emblema), con **aro dorado** en las heréticas para que destaquen (`src/render/pieces.ts`).
 
 ### ▶️ Cómo ejecutarlo

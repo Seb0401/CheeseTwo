@@ -3,21 +3,25 @@
 
 import { useMemo, useState } from 'react';
 import { GameDef } from '../../engine';
+import { isUnlocked, MetaState } from '../../game/meta';
 import { armiesForMode, ArmyInfo, MODES } from '../../game/modes';
 
 interface RunSetupScreenProps {
+  meta: MetaState;
   onStart: (game: GameDef, army: ArmyInfo) => void;
   onBack: () => void;
 }
 
-export function RunSetupScreen({ onStart, onBack }: RunSetupScreenProps) {
+export function RunSetupScreen({ meta, onStart, onBack }: RunSetupScreenProps) {
   const [modeId, setModeId] = useState(MODES.find((m) => m.status === 'playable')!.id);
   const [armyId, setArmyId] = useState('clasico');
 
   const mode = MODES.find((m) => m.id === modeId)!;
-  // Los ejércitos dependen del modo (Herético solo tiene sentido en Ajedrez).
+  // Los ejércitos dependen del modo (Herético solo tiene sentido en Ajedrez) y
+  // de los desbloqueos meta.
   const armies = useMemo(() => armiesForMode(modeId), [modeId]);
-  const army = armies.find((a) => a.id === armyId) ?? armies[0];
+  const armyAvailable = (a: ArmyInfo) => isUnlocked(meta, a.unlockId);
+  const army = armies.find((a) => a.id === armyId && armyAvailable(a)) ?? armies[0];
 
   return (
     <main className="screen">
@@ -53,22 +57,23 @@ export function RunSetupScreen({ onStart, onBack }: RunSetupScreenProps) {
       <section>
         <h3 className="section-title">Ejército inicial</h3>
         <div className="card-row">
-          {armies.map((a) => (
-            <button
-              key={a.id}
-              className={`select-card ${a.status === 'locked' ? 'locked' : ''} ${
-                a.id === armyId ? 'selected' : ''
-              }`}
-              disabled={a.status === 'locked'}
-              onClick={() => setArmyId(a.id)}
-            >
-              <span className="card-icon">{a.status === 'locked' ? '🔒' : a.icon}</span>
-              <span className="card-name">{a.name}</span>
-              <span className="card-desc">
-                {a.status === 'locked' ? a.unlockHint : a.description}
-              </span>
-            </button>
-          ))}
+          {armies.map((a) => {
+            const locked = !armyAvailable(a);
+            return (
+              <button
+                key={a.id}
+                className={`select-card ${locked ? 'locked' : ''} ${
+                  a.id === army.id ? 'selected' : ''
+                }`}
+                disabled={locked}
+                onClick={() => setArmyId(a.id)}
+              >
+                <span className="card-icon">{locked ? '🔒' : a.icon}</span>
+                <span className="card-name">{a.name}</span>
+                <span className="card-desc">{locked ? a.unlockHint : a.description}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 

@@ -7,7 +7,9 @@ import {
   Banner,
   bannersForGame,
   Board,
+  clausesForGame,
   Color,
+  createRng,
   GameDef,
   PieceType,
   pickN,
@@ -50,6 +52,8 @@ export interface RunState {
   duelIndex: number;
   /** Máximo de Estandartes equipables a la vez. */
   bannerSlots: number;
+  /** Cláusula que traerá el Jefe (elegida al azar al crear el run). */
+  clauseId?: string;
 }
 
 const STARTING_GOLD = 6;
@@ -64,15 +68,24 @@ export function rosterFromBoard(board: Board, color: Color): RosterEntry[] {
   return out;
 }
 
-export function createRun(game: GameDef, board: Board): RunState {
+export function createRun(game: GameDef, board: Board, seed = 1, goldBonus = 0): RunState {
+  // La cláusula del Jefe se sortea al crear el run (aleatoria, con semilla).
+  const pool = clausesForGame(game.id);
+  const [clause] = pickN(pool, 1, createRng(seed));
   return {
     gameId: game.id,
     roster: rosterFromBoard(board, 'white'),
-    gold: STARTING_GOLD,
+    gold: STARTING_GOLD + goldBonus,
     banners: [],
     duelIndex: 0,
     bannerSlots: 3,
+    clauseId: clause?.id,
   };
+}
+
+/** ¿Es el Duelo actual el del Jefe (último del run)? */
+export function isBossDuel(run: RunState): boolean {
+  return run.duelIndex === RUN_PLANS.length - 1;
 }
 
 /** Piezas (tipos) únicas del roster — para descubrir en el Compendio. */
