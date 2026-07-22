@@ -9,11 +9,12 @@ import {
   createDuel,
   legalMovesFrom,
   scoreMove,
+  setupBoardForClauses,
   toIndex,
 } from './index';
 
 const withClause = (clause: string, board: Board, banners: string[] = []) => ({
-  ...createDuel(CHESS, { target: 999, turnLimit: 20, banners, clause }),
+  ...createDuel(CHESS, { target: 999, turnLimit: 20, banners, clauses: [clause] }),
   board,
 });
 const emptyWith = (entries: [number, Board[number]][]): Board => {
@@ -93,5 +94,17 @@ describe('pool de cláusulas por juego', () => {
   it('el ajedrez tiene más cláusulas que las damas (algunas son solo suyas)', () => {
     expect(clausesForGame('chess').length).toBeGreaterThan(clausesForGame('damas').length);
     expect(clausesForGame('damas').every((c) => !c.gameId)).toBe(true);
+  });
+});
+
+describe('setupBoardForClauses (Corona II: 2 cláusulas a la vez)', () => {
+  it('encadena el setupBoard de varias cláusulas sobre el mismo tablero', () => {
+    const board = CHESS.createInitialBoard();
+    const before = board.filter((p) => p?.color === 'black' && p.type === 'rook').length;
+    // Fortaleza es la única de las 4 con setupBoard; aplicarla dos veces simula
+    // la cadena que usa Corona II (2 cláusulas activas a la vez).
+    const after = setupBoardForClauses(['ley-marcial', 'fortaleza'], board);
+    const rooks = after.filter((p) => p?.color === 'black' && p.type === 'rook').length;
+    expect(rooks).toBe(before + 2);
   });
 });

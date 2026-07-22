@@ -2,6 +2,8 @@
 // Vive fuera del engine (el motor no conoce la persistencia) y se guarda en
 // localStorage. Lógica pura + un par de helpers de carga/guardado.
 
+import { MAX_CROWN } from './crowns';
+
 export interface MetaState {
   version: 1;
   /** Piezas descubiertas, como claves `gameId/pieceType` (estilo compendio de Balatro). */
@@ -12,10 +14,20 @@ export interface MetaState {
   runsWon: number;
   /** Contenido desbloqueado (ids de ejércitos, etc.). */
   unlocks: string[];
+  /** Corona máxima jugable (0 = sin Corona; ver game/crowns.ts). Sube ganando en tu Corona actual. */
+  maxCrown: number;
 }
 
 export function emptyMeta(): MetaState {
-  return { version: 1, discovered: [], duelsWon: 0, duelsLost: 0, runsWon: 0, unlocks: [] };
+  return {
+    version: 1,
+    discovered: [],
+    duelsWon: 0,
+    duelsLost: 0,
+    runsWon: 0,
+    unlocks: [],
+    maxCrown: 0,
+  };
 }
 
 /**
@@ -29,15 +41,26 @@ const RUN_WIN_UNLOCKS: { when: (gameId: string, armyId: string) => boolean; gran
   { when: (_g, a) => a === 'realeza', grant: 'mercader' },
 ];
 
-/** Registra un run ganado: suma la victoria y concede los desbloqueos que toquen. */
-export function recordRunWin(meta: MetaState, gameId: string, armyId: string): MetaState {
+/**
+ * Registra un run ganado: suma la victoria, concede los desbloqueos que
+ * toquen y, si ganaste jugando en tu Corona máxima actual, desbloquea la
+ * siguiente (estilo stakes de Balatro — ver crowns.ts).
+ */
+export function recordRunWin(
+  meta: MetaState,
+  gameId: string,
+  armyId: string,
+  crown = 0,
+): MetaState {
   let unlocks = meta.unlocks;
   for (const rule of RUN_WIN_UNLOCKS) {
     if (rule.when(gameId, armyId) && !unlocks.includes(rule.grant)) {
       unlocks = [...unlocks, rule.grant];
     }
   }
-  return { ...meta, runsWon: meta.runsWon + 1, unlocks };
+  const maxCrown =
+    crown === meta.maxCrown && meta.maxCrown < MAX_CROWN ? meta.maxCrown + 1 : meta.maxCrown;
+  return { ...meta, runsWon: meta.runsWon + 1, unlocks, maxCrown };
 }
 
 export function isUnlocked(meta: MetaState, unlockId: string | undefined): boolean {
@@ -79,6 +102,7 @@ export function loadMeta(storage: Pick<Storage, 'getItem'> | null = defaultStora
     // Sanea campos añadidos en versiones nuevas por si el guardado es antiguo.
     if (!Array.isArray(meta.unlocks)) meta.unlocks = [];
     if (typeof meta.runsWon !== 'number') meta.runsWon = 0;
+    if (typeof meta.maxCrown !== 'number') meta.maxCrown = 0;
     return meta;
   } catch {
     return emptyMeta();

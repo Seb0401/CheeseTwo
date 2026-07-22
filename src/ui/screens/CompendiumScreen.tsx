@@ -2,6 +2,7 @@
 // Lo no descubierto se muestra como silueta "?" — jugar es lo que revela.
 
 import { BANNERS, GameDef } from '../../engine';
+import { CROWNS } from '../../game/crowns';
 import { isDiscovered, isUnlocked, MetaState } from '../../game/meta';
 import { ARMIES, MODES } from '../../game/modes';
 
@@ -64,6 +65,10 @@ export function CompendiumScreen({ meta, onBack }: CompendiumScreenProps) {
         </span>
         <span className="chip">
           Runs ganados: <strong>{meta.runsWon}</strong>
+        </span>
+        <span className="chip">
+          Corona máxima:{' '}
+          <strong>{meta.maxCrown > 0 ? CROWNS[meta.maxCrown - 1].name : 'Sin Corona'}</strong>
         </span>
         <span className="chip">
           Duelos G/P: <strong>{meta.duelsWon}</strong> / {meta.duelsLost}

@@ -66,6 +66,7 @@ Contenido y sistemas ya jugables:
 - **Piezas heréticas** coleccionables: Canciller, Arzobispo, Saltamontes, Camello, Cañón, Amazona y Berolina.
 - **Castas** (Infantería/Menor/Mayor/Élite) y la **Forja**: cambias una ficha por otra **de su misma casta** pagando oro — un peón nunca se vuelve dama.
 - **Progresión meta** (localStorage): ganar runs desbloquea ejércitos en cadena (Enjambre → Realeza → Mercader), cada uno con efecto real. El **Compendio** muestra runs ganados, ejércitos y los 11 Estandartes.
+- **Coronas** (`src/game/crowns.ts`): dificultad ascendente estilo *stakes* de Balatro, elegible en la Preparación de Run hasta la máxima desbloqueada. Corona I (+20% metas), II (Jefe con 2 Cláusulas), III (reroll +1 oro), IV (−25% recompensa). Ganar en tu Corona actual desbloquea la siguiente.
 - **Fichas low-poly**: piezas vectoriales facetadas (moneda con luz/sombra + emblema), con **aro dorado** en las heréticas para que destaquen (`src/render/pieces.ts`).
 
 ### ▶️ Cómo ejecutarlo

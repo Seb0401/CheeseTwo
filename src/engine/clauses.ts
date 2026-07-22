@@ -109,3 +109,8 @@ export const CLAUSES: Record<string, Clause> = {
 export function clausesForGame(gameId: string): Clause[] {
   return Object.values(CLAUSES).filter((c) => !c.gameId || c.gameId === gameId);
 }
+
+/** Aplica `setupBoard` de varias cláusulas en cadena (Corona II: el Jefe trae 2). */
+export function setupBoardForClauses(clauseIds: string[], board: Board): Board {
+  return clauseIds.reduce((b, id) => CLAUSES[id]?.setupBoard?.(b) ?? b, board);
+}

@@ -525,3 +525,19 @@ body {
   opacity: 0.8;
   line-height: 1.4;
 }
+
+.clause-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.clause-entry + .clause-entry {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(216, 88, 88, 0.3);
+}
+
+.clause-warning .clause-entry + .clause-entry {
+  border-top-color: rgba(216, 140, 70, 0.4);
+}

@@ -78,7 +78,7 @@ Ideas pendientes:
 - **"Impuesto de sangre":** cada captura que haces cura una pieza del rival.
 - **"Espejo":** el rival copia tu última jugada si es legal.
 
-> Cada cláusula engancha uno de tres puntos del motor: puntaje (`adjustScore`), movimiento (`filterMoves`) o tablero inicial (`setupBoard`). Añadir una cláusula = añadir una entrada al registro.
+> Cada cláusula engancha uno de tres puntos del motor: puntaje (`adjustScore`), movimiento (`filterMoves`) o tablero inicial (`setupBoard`). Añadir una cláusula = añadir una entrada al registro. Desde **Corona II** ✅ ([progresión meta](06-progresion-meta.md)) el Jefe trae **2 cláusulas a la vez**: `DuelState.clauses` es un array y se aplican en cadena.
 
 Las cláusulas fuerzan a **cambiar la build**, que es el corazón de la rejugabilidad.
 

@@ -17,6 +17,7 @@ import {
   SquareIndex,
 } from '../engine';
 import { castaOf } from './castas';
+import { MAX_CROWN } from './crowns';
 
 export interface RosterEntry {
   square: SquareIndex;
@@ -52,8 +53,10 @@ export interface RunState {
   duelIndex: number;
   /** Máximo de Estandartes equipables a la vez. */
   bannerSlots: number;
-  /** Cláusula que traerá el Jefe (elegida al azar al crear el run). */
-  clauseId?: string;
+  /** Cláusulas que traerá el Jefe (elegidas al azar al crear el run; Corona II trae 2). */
+  clauseIds: string[];
+  /** Nivel de Corona elegido (0 = sin Corona, 1..4 = dificultad acumulada). Ver crowns.ts. */
+  crown: number;
 }
 
 const STARTING_GOLD = 6;
@@ -68,10 +71,18 @@ export function rosterFromBoard(board: Board, color: Color): RosterEntry[] {
   return out;
 }
 
-export function createRun(game: GameDef, board: Board, seed = 1, goldBonus = 0): RunState {
-  // La cláusula del Jefe se sortea al crear el run (aleatoria, con semilla).
+export function createRun(
+  game: GameDef,
+  board: Board,
+  seed = 1,
+  goldBonus = 0,
+  crown = 0,
+): RunState {
+  // Las cláusulas del Jefe se sortean al crear el run (aleatorias, con semilla).
+  // Corona II: el Jefe trae 2 a la vez en lugar de 1.
   const pool = clausesForGame(game.id);
-  const [clause] = pickN(pool, 1, createRng(seed));
+  const clauseCount = crown >= 2 ? 2 : 1;
+  const clauses = pickN(pool, Math.min(clauseCount, pool.length), createRng(seed));
   return {
     gameId: game.id,
     roster: rosterFromBoard(board, 'white'),
@@ -79,13 +90,20 @@ export function createRun(game: GameDef, board: Board, seed = 1, goldBonus = 0):
     banners: [],
     duelIndex: 0,
     bannerSlots: 3,
-    clauseId: clause?.id,
+    clauseIds: clauses.map((c) => c.id),
+    crown: Math.min(Math.max(crown, 0), MAX_CROWN),
   };
 }
 
 /** ¿Es el Duelo actual el del Jefe (último del run)? */
 export function isBossDuel(run: RunState): boolean {
   return run.duelIndex === RUN_PLANS.length - 1;
+}
+
+/** Los Duelos de un run, escalados por Corona (Corona I: metas de Presión +20%). */
+export function plansForCrown(crown: number): DuelPlan[] {
+  if (crown < 1) return RUN_PLANS;
+  return RUN_PLANS.map((p) => ({ ...p, target: Math.round(p.target * 1.2) }));
 }
 
 /** Piezas (tipos) únicas del roster — para descubrir en el Compendio. */
@@ -125,10 +143,19 @@ export function buildDuelBoard(
   return board;
 }
 
-/** Oro ganado por vencer un Duelo: base + bonus por superar la meta + extra de Jefe. */
-export function duelReward(plan: DuelPlan, pressure: number): number {
+/**
+ * Oro ganado por vencer un Duelo: base + bonus por superar la meta + extra de
+ * Jefe. Corona IV recorta la recompensa un 25%.
+ */
+export function duelReward(plan: DuelPlan, pressure: number, crown = 0): number {
   const overflow = Math.max(0, pressure - plan.target);
-  return 3 + Math.floor(overflow / 8) + (plan.kind === 'jefe' ? 3 : 0);
+  const raw = 3 + Math.floor(overflow / 8) + (plan.kind === 'jefe' ? 3 : 0);
+  return crown >= 4 ? Math.max(1, Math.floor(raw * 0.75)) : raw;
+}
+
+/** Coste de rerollar la oferta de la Tienda. Corona III lo sube en 1. */
+export function rerollCost(run: RunState): number {
+  return REROLL_COST + (run.crown >= 3 ? 1 : 0);
 }
 
 // ─── Forja (cambiar una pieza por otra de su misma casta) ────────────────────

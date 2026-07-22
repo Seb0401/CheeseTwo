@@ -23,7 +23,7 @@ type Screen =
   | { name: 'salon' }
   | { name: 'setup' }
   | { name: 'compendio' }
-  | { name: 'run'; game: GameDef; army: ArmyInfo; board: Board; seed: number };
+  | { name: 'run'; game: GameDef; army: ArmyInfo; board: Board; seed: number; crown: number };
 
 export function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'salon' });
@@ -37,11 +37,18 @@ export function App() {
     });
   }, []);
 
-  /** Preparación lista → arrancar el run con el ejército elegido aplicado. */
-  const startRun = useCallback((game: GameDef, army: ArmyInfo) => {
+  /** Preparación lista → arrancar el run con el ejército y la Corona elegidos. */
+  const startRun = useCallback((game: GameDef, army: ArmyInfo, crown: number) => {
     const base = game.createInitialBoard();
     const board = army.apply ? army.apply(base) : base;
-    setScreen({ name: 'run', game, army, board, seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0 });
+    setScreen({
+      name: 'run',
+      game,
+      army,
+      board,
+      crown,
+      seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0,
+    });
   }, []);
 
   const discover = useCallback(
@@ -77,11 +84,14 @@ export function App() {
           game={screen.game}
           initialBoard={screen.board}
           seed={screen.seed}
+          crown={screen.crown}
           goldBonus={screen.army.startingGoldBonus}
           onDiscoverPieces={discover}
           onRecordDuel={recordDuelResult}
           onRunEnd={(won) => {
-            if (won) updateMeta((m) => recordRunWin(m, screen.game.id, screen.army.id));
+            if (won) {
+              updateMeta((m) => recordRunWin(m, screen.game.id, screen.army.id, screen.crown));
+            }
           }}
           onExit={() => setScreen({ name: 'salon' })}
         />

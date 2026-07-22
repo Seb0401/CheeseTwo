@@ -3,18 +3,20 @@
 
 import { useMemo, useState } from 'react';
 import { GameDef } from '../../engine';
+import { CROWNS } from '../../game/crowns';
 import { isUnlocked, MetaState } from '../../game/meta';
 import { armiesForMode, ArmyInfo, MODES } from '../../game/modes';
 
 interface RunSetupScreenProps {
   meta: MetaState;
-  onStart: (game: GameDef, army: ArmyInfo) => void;
+  onStart: (game: GameDef, army: ArmyInfo, crown: number) => void;
   onBack: () => void;
 }
 
 export function RunSetupScreen({ meta, onStart, onBack }: RunSetupScreenProps) {
   const [modeId, setModeId] = useState(MODES.find((m) => m.status === 'playable')!.id);
   const [armyId, setArmyId] = useState('clasico');
+  const [crown, setCrown] = useState(0);
 
   const mode = MODES.find((m) => m.id === modeId)!;
   // Los ejércitos dependen del modo (Herético solo tiene sentido en Ajedrez) y
@@ -77,14 +79,55 @@ export function RunSetupScreen({ meta, onStart, onBack }: RunSetupScreenProps) {
         </div>
       </section>
 
+      <section>
+        <h3 className="section-title">Corona — dificultad</h3>
+        <div className="card-row">
+          <button
+            className={`select-card ${crown === 0 ? 'selected' : ''}`}
+            onClick={() => setCrown(0)}
+          >
+            <span className="card-icon">·</span>
+            <span className="card-name">Sin Corona</span>
+            <span className="card-desc">Dificultad estándar.</span>
+          </button>
+          {CROWNS.map((c) => {
+            const locked = c.level > meta.maxCrown;
+            return (
+              <button
+                key={c.level}
+                className={`select-card ${locked ? 'locked' : ''} ${
+                  c.level === crown ? 'selected' : ''
+                }`}
+                disabled={locked}
+                onClick={() => setCrown(c.level)}
+              >
+                <span className="card-icon">{locked ? '🔒' : c.icon}</span>
+                <span className="card-name">{c.name}</span>
+                <span className="card-desc">
+                  {locked
+                    ? c.level === 1
+                      ? 'Gana un run sin Corona.'
+                      : `Gana un run en Corona ${c.level - 1}.`
+                    : c.description}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <footer className="setup-footer">
         <p className="hint">
           El run son <strong>3 Duelos</strong> de dificultad creciente hasta el <strong>Jefe</strong>
           , con una <strong>Tienda</strong> entre cada uno para comprar Estandartes y{' '}
           <strong>forjar</strong> tus fichas.
         </p>
-        <button className="btn btn-primary btn-start" onClick={() => onStart(mode.game!, army)}>
+        <button
+          className="btn btn-primary btn-start"
+          onClick={() => onStart(mode.game!, army, crown)}
+        >
           Empezar run — {mode.name} · {army.name}
+          {crown > 0 ? ` · Corona ${crown}` : ''}
         </button>
       </footer>
     </main>

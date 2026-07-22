@@ -18,8 +18,8 @@ export interface DuelConfig {
   banners?: string[];
   /** Tablero inicial alternativo (ejércitos iniciales lo modifican). */
   board?: Board;
-  /** Cláusula de Jefe activa (id). */
-  clause?: string;
+  /** Cláusulas de Jefe activas (ids). */
+  clauses?: string[];
 }
 
 export function createDuel(game: GameDef, config: DuelConfig = {}): DuelState {
@@ -34,7 +34,7 @@ export function createDuel(game: GameDef, config: DuelConfig = {}): DuelState {
     status: 'playing',
     banners: config.banners ?? [],
     lastScore: null,
-    clause: config.clause,
+    clauses: config.clauses ?? [],
   };
 }
 
@@ -53,8 +53,10 @@ export function legalMovesFrom(game: GameDef, state: DuelState, from: SquareInde
   if (!piece || piece.color !== state.turn) return [];
   let moves = game.movesFrom(state.board, from);
   // Las cláusulas solo estorban al jugador (blancas), no al rival.
-  if (state.clause && piece.color === 'white') {
-    moves = CLAUSES[state.clause]?.filterMoves?.(state, from, moves) ?? moves;
+  if (piece.color === 'white') {
+    for (const id of state.clauses ?? []) {
+      moves = CLAUSES[id]?.filterMoves?.(state, from, moves) ?? moves;
+    }
   }
   return moves;
 }

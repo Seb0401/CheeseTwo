@@ -11,7 +11,7 @@ import {
   DuelPlan,
   forgeCost,
   forgeOptions,
-  REROLL_COST,
+  rerollCost,
   RunState,
 } from '../../game/run';
 import { createRng } from '../../engine';
@@ -24,8 +24,8 @@ interface ShopScreenProps {
   totalDuels: number;
   /** Semilla de la oferta (cambia al rerollar). */
   offerSeed: number;
-  /** Cláusula del Jefe, si el siguiente Duelo es el Jefe (para avisar). */
-  bossClause?: Clause;
+  /** Cláusulas del Jefe, si el siguiente Duelo es el Jefe (para avisar; Corona II trae 2). */
+  bossClauses?: Clause[];
   onBuyBanner: (banner: Banner) => void;
   onReroll: () => void;
   onForge: (rosterIndex: number, newType: PieceType) => void;
@@ -40,7 +40,7 @@ export function ShopScreen({
   duelNumber,
   totalDuels,
   offerSeed,
-  bossClause,
+  bossClauses = [],
   onBuyBanner,
   onReroll,
   onForge,
@@ -48,6 +48,7 @@ export function ShopScreen({
   onExit,
 }: ShopScreenProps) {
   const offer = useMemo(() => bannerOffer(run, createRng(offerSeed)), [run, offerSeed]);
+  const reroll = rerollCost(run);
   // Pieza del roster seleccionada para forjar (índice), o null.
   const [forging, setForging] = useState<number | null>(null);
 
@@ -81,12 +82,16 @@ export function ShopScreen({
         {nextPlan.target} de Presión.
       </p>
 
-      {bossClause && (
+      {bossClauses.length > 0 && (
         <div className="clause-warning">
-          <span className="clause-title">
-            ⚠️ {bossClause.icon} Cláusula del Jefe: {bossClause.name}
-          </span>
-          <span className="clause-desc">{bossClause.description} — prepara tu build en consecuencia.</span>
+          {bossClauses.map((c) => (
+            <div key={c.id} className="clause-entry">
+              <span className="clause-title">
+                ⚠️ {c.icon} Cláusula del Jefe: {c.name}
+              </span>
+              <span className="clause-desc">{c.description} — prepara tu build en consecuencia.</span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -112,8 +117,8 @@ export function ShopScreen({
             );
           })}
         </div>
-        <button className="btn btn-reroll" disabled={run.gold < REROLL_COST} onClick={onReroll}>
-          🎲 Rerollar · 🪙 {REROLL_COST}
+        <button className="btn btn-reroll" disabled={run.gold < reroll} onClick={onReroll}>
+          🎲 Rerollar · 🪙 {reroll}
         </button>
       </section>
 

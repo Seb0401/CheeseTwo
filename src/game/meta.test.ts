@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_CROWN } from './crowns';
 import {
   discoverPieces,
   emptyMeta,
@@ -88,5 +89,30 @@ describe('meta: desbloqueos por victoria de run', () => {
     let meta = recordRunWin(emptyMeta(), 'chess', 'clasico');
     meta = recordRunWin(meta, 'chess', 'clasico');
     expect(meta.unlocks.filter((u) => u === 'enjambre')).toHaveLength(1);
+  });
+});
+
+describe('meta: Coronas', () => {
+  it('ganar en tu Corona máxima desbloquea la siguiente; ganar por debajo no', () => {
+    let meta = emptyMeta();
+    expect(meta.maxCrown).toBe(0);
+
+    meta = recordRunWin(meta, 'chess', 'clasico', 0);
+    expect(meta.maxCrown).toBe(1);
+
+    // Repetir la victoria en una Corona por debajo de tu máxima no la sube más.
+    meta = recordRunWin(meta, 'chess', 'clasico', 0);
+    expect(meta.maxCrown).toBe(1);
+
+    meta = recordRunWin(meta, 'chess', 'clasico', 1);
+    expect(meta.maxCrown).toBe(2);
+  });
+
+  it('no sube más allá de la Corona máxima del juego', () => {
+    let meta = emptyMeta();
+    for (let i = 0; i < 10; i++) {
+      meta = recordRunWin(meta, 'chess', 'clasico', meta.maxCrown);
+    }
+    expect(meta.maxCrown).toBe(MAX_CROWN);
   });
 });

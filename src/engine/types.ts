@@ -86,8 +86,8 @@ export interface DuelState {
   banners: string[];
   /** Desglose de la última jugada del jugador (para el HUD). */
   lastScore: ScoreBreakdown | null;
-  /** Cláusula de Jefe activa (id), si la hay. Estorba al jugador. Ver clauses.ts. */
-  clause?: string;
+  /** Cláusulas de Jefe activas (ids), si las hay. Estorban al jugador. Ver clauses.ts. */
+  clauses?: string[];
   /** Casilla donde aterrizó la última pieza del jugador (para la cláusula Gravedad). */
   lastPlayerTo?: SquareIndex;
 }

@@ -16,7 +16,7 @@ interface HudProps {
 export function Hud({ game, state, title, gold, onContinue, onExit, exitLabel }: HudProps) {
   const pct = Math.min(100, Math.round((state.pressure / state.target) * 100));
   const banners = state.banners.map((id) => BANNERS[id]).filter(Boolean);
-  const clause = state.clause ? CLAUSES[state.clause] : undefined;
+  const clauses = (state.clauses ?? []).map((id) => CLAUSES[id]).filter(Boolean);
   const score = state.lastScore;
   const ended = state.status !== 'playing';
 
@@ -50,12 +50,16 @@ export function Hud({ game, state, title, gold, onContinue, onExit, exitLabel }:
         </strong>
       </div>
 
-      {clause && (
-        <div className="clause-box" title={clause.description}>
-          <span className="clause-title">
-            {clause.icon} Cláusula: {clause.name}
-          </span>
-          <span className="clause-desc">{clause.description}</span>
+      {clauses.length > 0 && (
+        <div className="clause-box">
+          {clauses.map((c) => (
+            <div key={c.id} className="clause-entry" title={c.description}>
+              <span className="clause-title">
+                {c.icon} Cláusula: {c.name}
+              </span>
+              <span className="clause-desc">{c.description}</span>
+            </div>
+          ))}
         </div>
       )}
 

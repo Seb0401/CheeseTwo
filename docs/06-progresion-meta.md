@@ -2,7 +2,7 @@
 
 Lo que persiste **entre runs** y le da razón para volver. Inspirado en el sistema de desbloqueos de Balatro (barajas, jokers, apuestas/stakes) y StS (personajes, ascensiones).
 
-> **Estado (implementado):** la meta persiste en localStorage (`src/game/meta.ts`): piezas **descubiertas**, **Runs ganados**, Duelos G/P y **desbloqueos**. Ganar un run concede ejércitos nuevos en cadena: 1ª victoria → **Enjambre**; ganar con Enjambre → **Realeza**; ganar con Realeza → **Mercader**. Los ejércitos ya tienen efecto real (ver abajo) y el Compendio muestra todo. Pendiente: Coronas (dificultad ascendente), desbloqueo de piezas/cartas para el pool, y retos.
+> **Estado (implementado):** la meta persiste en localStorage (`src/game/meta.ts`): piezas **descubiertas**, **Runs ganados**, Duelos G/P, **desbloqueos** y **Corona máxima**. Ganar un run concede ejércitos nuevos en cadena: 1ª victoria → **Enjambre**; ganar con Enjambre → **Realeza**; ganar con Realeza → **Mercader**. Los ejércitos ya tienen efecto real (ver abajo) y el Compendio muestra todo. **Coronas** (`src/game/crowns.ts`) ya son jugables: se eligen en la Preparación de Run (hasta la máxima desbloqueada) y ganar en tu Corona actual desbloquea la siguiente. Pendiente: desbloqueo de piezas/cartas para el pool, y retos.
 
 ---
 
@@ -24,14 +24,15 @@ Cada uno define con qué empiezas y sesga tu estrategia (✅ = implementado con 
 - **Realeza** ✅: dama → **Amazona** (dama+caballo) pero sin ambos caballos. Pocas piezas, una superpieza.
 - **Mercader** ✅: ejército más débil (−1 torre, −1 alfil) pero **+6 de oro inicial**. Build económica.
 
-## Dificultad ascendente (Apuestas / Coronas)
+## Dificultad ascendente (Apuestas / Coronas) ✅
 
-Como los *stakes* de Balatro: capas de dificultad que se acumulan al ganar:
-- Corona 1: metas de Presión +20%.
-- Corona 2: los Jefes tienen 2 cláusulas.
-- Corona 3: la tienda cuesta más / menos rerolls.
-- Corona 4: el oro por intereses se reduce.
-- ...cada una desbloquea recompensas cosméticas/colección.
+Como los *stakes* de Balatro: capas de dificultad que se ACUMULAN al ganar (`src/game/crowns.ts`). Se elige la Corona en la Preparación de Run (nunca por encima de la máxima desbloqueada); ganar un run jugando en tu Corona máxima actual desbloquea la siguiente (`meta.maxCrown`, ver `recordRunWin` en `meta.ts`):
+- **Corona I** ✅: metas de Presión +20%.
+- **Corona II** ✅: el Jefe trae **2 Cláusulas** a la vez en lugar de 1.
+- **Corona III** ✅: rerolar la Tienda cuesta 1 oro más.
+- **Corona IV** ✅: la recompensa de oro por Duelo baja un 25% (no hay intereses implementados aún — ver [economía](03-economia-recursos.md)).
+
+Ideas pendientes: recompensas cosméticas/de colección por Corona.
 
 ## Colección y descubrimiento
 

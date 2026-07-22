@@ -40,7 +40,7 @@ export function scoreMove(game: GameDef, state: DuelState, move: Move): ScoreBre
     parts.notes.push({ source: `${banner.icon} ${banner.name}`, detail: bonus.detail });
   }
 
-  if (state.clause) CLAUSES[state.clause]?.adjustScore?.(parts);
+  for (const id of state.clauses ?? []) CLAUSES[id]?.adjustScore?.(parts);
 
   const base = parts.gameBase + parts.bannerBase;
   const mult =

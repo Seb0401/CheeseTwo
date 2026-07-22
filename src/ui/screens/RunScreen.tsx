@@ -12,6 +12,7 @@ import {
   DuelState,
   GameDef,
   PieceType,
+  setupBoardForClauses,
 } from '../../engine';
 import {
   BANNER_COST,
@@ -22,9 +23,9 @@ import {
   forgeCost,
   forgePiece,
   isBossDuel,
-  REROLL_COST,
+  plansForCrown,
+  rerollCost,
   rosterTypes,
-  RUN_PLANS,
 } from '../../game/run';
 import { DuelScreen } from './DuelScreen';
 import { ShopScreen } from './ShopScreen';
@@ -33,8 +34,10 @@ interface RunScreenProps {
   game: GameDef;
   /** Tablero inicial (ya con el ejército aplicado). */
   initialBoard: Board;
-  /** Semilla del run (fija la cláusula del Jefe). */
+  /** Semilla del run (fija las cláusulas del Jefe). */
   seed: number;
+  /** Nivel de Corona elegido (0 = sin Corona). Ver game/crowns.ts. */
+  crown: number;
   /** Oro inicial extra del ejército (Mercader). */
   goldBonus?: number;
   onDiscoverPieces: (gameId: string, types: PieceType[]) => void;
@@ -49,20 +52,22 @@ export function RunScreen({
   game,
   initialBoard,
   seed,
+  crown,
   goldBonus = 0,
   onDiscoverPieces,
   onRecordDuel,
   onRunEnd,
   onExit,
 }: RunScreenProps) {
-  const [run, setRun] = useState(() => createRun(game, initialBoard, seed, goldBonus));
+  const [run, setRun] = useState(() => createRun(game, initialBoard, seed, goldBonus, crown));
   const [phase, setPhase] = useState<Phase>('shop');
   const [rerolls, setRerolls] = useState(0);
   const [outcome, setOutcome] = useState<'won' | 'lost' | null>(null);
   const [duelConfig, setDuelConfig] = useState<DuelConfig | null>(null);
 
-  const plan = RUN_PLANS[run.duelIndex];
-  const isLast = run.duelIndex === RUN_PLANS.length - 1;
+  const plans = useMemo(() => plansForCrown(run.crown), [run.crown]);
+  const plan = plans[run.duelIndex];
+  const isLast = run.duelIndex === plans.length - 1;
 
   // ── Tienda ────────────────────────────────────────────────────────────────
   const buyBanner = useCallback((banner: Banner) => {
@@ -74,7 +79,10 @@ export function RunScreen({
   }, []);
 
   const reroll = useCallback(() => {
-    setRun((r) => (r.gold >= REROLL_COST ? { ...r, gold: r.gold - REROLL_COST } : r));
+    setRun((r) => {
+      const cost = rerollCost(r);
+      return r.gold >= cost ? { ...r, gold: r.gold - cost } : r;
+    });
     setRerolls((x) => x + 1);
   }, []);
 
@@ -93,16 +101,16 @@ export function RunScreen({
   const startDuel = useCallback(() => {
     const duelSeed = 1000 + run.duelIndex * 97;
     let board = buildDuelBoard(game, run.roster, plan, createRng(duelSeed));
-    // El Jefe aplica su cláusula: puede transformar el tablero inicial.
-    const boss = isBossDuel(run) ? run.clauseId : undefined;
-    if (boss) board = CLAUSES[boss]?.setupBoard?.(board) ?? board;
+    // El Jefe aplica sus cláusulas: pueden transformar el tablero inicial.
+    const bossIds = isBossDuel(run) ? run.clauseIds : [];
+    if (bossIds.length > 0) board = setupBoardForClauses(bossIds, board);
     onDiscoverPieces(game.id, rosterTypes(run));
     setDuelConfig({
       board,
       banners: run.banners,
       target: plan.target,
       turnLimit: plan.turnLimit,
-      clause: boss,
+      clauses: bossIds,
     });
     setOutcome(null);
     setPhase('duel');
@@ -112,7 +120,9 @@ export function RunScreen({
     (state: DuelState) => {
       const won = state.status === 'won';
       onRecordDuel(won);
-      if (won) setRun((r) => ({ ...r, gold: r.gold + duelReward(plan, state.pressure) }));
+      if (won) {
+        setRun((r) => ({ ...r, gold: r.gold + duelReward(plan, state.pressure, r.crown) }));
+      }
       setOutcome(won ? 'won' : 'lost');
     },
     [plan, onRecordDuel],
@@ -133,8 +143,10 @@ export function RunScreen({
   }, [outcome, isLast, onRunEnd]);
 
   const offerSeed = useMemo(() => run.duelIndex * 100 + rerolls, [run.duelIndex, rerolls]);
-  // La cláusula solo se revela en la Tienda previa al Jefe (y en su Duelo).
-  const bossClause = isBossDuel(run) && run.clauseId ? CLAUSES[run.clauseId] : undefined;
+  // Las cláusulas solo se revelan en la Tienda previa al Jefe (y en su Duelo).
+  const bossClauses = isBossDuel(run)
+    ? run.clauseIds.map((id) => CLAUSES[id]).filter((c): c is NonNullable<typeof c> => Boolean(c))
+    : [];
 
   if (phase === 'shop') {
     return (
@@ -143,9 +155,9 @@ export function RunScreen({
         run={run}
         nextPlan={plan}
         duelNumber={run.duelIndex + 1}
-        totalDuels={RUN_PLANS.length}
+        totalDuels={plans.length}
         offerSeed={offerSeed}
-        bossClause={bossClause}
+        bossClauses={bossClauses}
         onBuyBanner={buyBanner}
         onReroll={reroll}
         onForge={forge}
@@ -161,7 +173,7 @@ export function RunScreen({
         key={run.duelIndex}
         game={game}
         config={duelConfig}
-        title={`${plan.label} · Duelo ${run.duelIndex + 1}/${RUN_PLANS.length}`}
+        title={`${plan.label} · Duelo ${run.duelIndex + 1}/${plans.length}`}
         gold={run.gold}
         onResult={handleResult}
         onContinue={handleContinue}
