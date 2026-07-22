@@ -25,7 +25,11 @@ Estructura de carpetas (estado actual + destino):
 /src
   /engine        ← motor de reglas: TS PURO, sin React ni Pixi, determinista
     types.ts     ← núcleo genérico + contrato GameDef (multi-juego) ✅
-    geometry.ts  ← hoy 8×8 denso; destino: grafo de casillas (hex, 3D)
+    geometry.ts  ← 8×8 denso (ajedrez, damas); tableros no rectangulares (ver
+                   ajedrez 3D en doc 09) definen su PROPIA geometría local en
+                   su archivo — el destino de "grafo de casillas" para hex
+                   sigue pendiente, pero `GameDef.layout` (opcional) ya
+                   desacopla el RENDER de la rejilla 8×8
     duel.ts      ← máquina de estados del Duelo, agnóstica al juego ✅
     ai.ts        ← heurística voraz genérica (MVP); minimax aparte (modo puro)
     /games       ← un GameDef por juego: chess ✅, damas, ludo… (ver doc 09)

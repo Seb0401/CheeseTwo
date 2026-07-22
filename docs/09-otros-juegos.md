@@ -7,7 +7,7 @@ CheeseTwo crece de "ajedrez roguelike" a **salón de juegos de mesa roguelike**:
 - **Presión universal.** Todos los juegos puntúan con `Base × Mult` y sus propias tablas de acciones, para que las cartas compartidas funcionen en todos. Queda abierta la búsqueda de una métrica aún más divertida (ver §6) — cualquier reemplazo debe ser también universal.
 - **Damas ya está implementada y jugable ✅** (cadenas de captura con mult por salto, captura obligatoria, coronación). Ludo se diseña ya, se implementa después (necesita azar con semilla y 4 asientos).
 
-> **Estado:** el motor multi-juego ya sostiene **dos juegos jugables** (Ajedrez y Damas), ambos dentro del mismo sistema de run/tienda. Los Estandartes universales (Verdugo, Coronista, Cartógrafo, El Monje) funcionan en ambos — la sinergia entre juegos ya es real.
+> **Estado:** el motor multi-juego ya sostiene **tres juegos jugables** (Ajedrez, Damas y Ajedrez 3D), todos dentro del mismo sistema de run/tienda. Los Estandartes universales (Verdugo, Coronista, Cartógrafo, El Monje) funcionan en los tres — la sinergia entre juegos ya es real. Ajedrez 3D (`src/engine/games/tridchess.ts`) reutiliza el catálogo de piezas y castas del ajedrez clásico pero con geometría y `movesFrom` propios (ver [05](05-tableros-y-modos.md#3d-multi-capa--implementado--ajedrez-3d-srcenginegamestridchessts)); demostró que `GameDef.layout` (nuevo, opcional) alcanza para tableros no rectangulares sin tocar el núcleo de Duelo/Presión/IA.
 
 ---
 

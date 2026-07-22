@@ -56,7 +56,7 @@ INICIO DE RUN  →  elige ejército inicial + tablero
 
 **Fase: Hito 1 en curso — el bucle roguelike jugable.** Un **run** son **3 Duelos** de dificultad creciente (Rival Menor → Mayor → **JEFE**) con una **Tienda** antes de cada uno. Ganas Duelos generando **Presión** (`Base × Mult` estilo Balatro); el oro se gasta en Estandartes y en **forjar** tu ejército.
 
-El motor es **multi-juego**: el núcleo (Duelo, Presión, IA) es agnóstico y cada juego es un `GameDef` en `src/engine/games/`. Ya hay **dos modos jugables**: **Ajedrez** y **Damas** (con cadenas de captura que multiplican la Presión). Ver [docs/09](docs/09-otros-juegos.md).
+El motor es **multi-juego**: el núcleo (Duelo, Presión, IA) es agnóstico y cada juego es un `GameDef` en `src/engine/games/`. Ya hay **tres modos jugables**: **Ajedrez**, **Damas** (con cadenas de captura que multiplican la Presión) y **Ajedrez 3D** (7 tableros/64 casillas al estilo Star Trek, con movimiento real en 3 dimensiones). Ver [docs/09](docs/09-otros-juegos.md).
 
 Interfaz ([docs/10](docs/10-interfaz.md)): **Salón** → **Preparación de Run** (modo + ejército) → **Tienda ↔ Duelo** ×3 → **Resultado**, más el **Compendio** estilo Balatro donde las piezas se *descubren* jugando (persistencia en localStorage).
 
@@ -68,6 +68,7 @@ Contenido y sistemas ya jugables:
 - **Progresión meta** (localStorage): ganar runs desbloquea ejércitos en cadena (Enjambre → Realeza → Mercader), cada uno con efecto real. El **Compendio** muestra runs ganados, ejércitos y los 11 Estandartes.
 - **Coronas** (`src/game/crowns.ts`): dificultad ascendente estilo *stakes* de Balatro, elegible en la Preparación de Run hasta la máxima desbloqueada. Corona I (+20% metas), II (Jefe con 2 Cláusulas), III (reroll +1 oro), IV (−25% recompensa). Ganar en tu Corona actual desbloquea la siguiente.
 - **Fichas low-poly**: piezas vectoriales facetadas (moneda con luz/sombra + emblema), con **aro dorado** en las heréticas para que destaquen (`src/render/pieces.ts`).
+- **Ajedrez 3D** (`src/engine/games/tridchess.ts`): adaptación de las reglas de tablero múltiple de Star Trek — 3 tableros principales apilados + 4 "Attack Boards" en las esquinas (64 casillas), con movimiento real en 3D (torres/damas se deslizan en vertical, alfiles con diagonales "triagonales", caballos que saltan de nivel, peones que suben en escalera por los 3 tableros). Los Attack Boards no se deslizan ni rotan durante el Duelo — ver [docs/05](docs/05-tableros-y-modos.md).
 
 ### ▶️ Cómo ejecutarlo
 

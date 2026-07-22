@@ -2,7 +2,7 @@
 // Contenido de UI dirigido por datos: la Preparación de Run y el Compendio
 // se dibujan desde aquí. Ver docs/09 (juegos) y docs/10 (interfaz).
 
-import { Board, CHESS, DAMAS, GameDef, toIndex } from '../engine';
+import { Board, CHESS, DAMAS, GameDef, toIndex, TRIDCHESS } from '../engine';
 
 export type ModeStatus = 'playable' | 'locked';
 
@@ -35,6 +35,14 @@ export const MODES: ModeInfo[] = [
     tagline: 'Cadenas de captura como combos que disparan el mult.',
     status: 'playable',
     game: DAMAS,
+  },
+  {
+    id: TRIDCHESS.id,
+    name: TRIDCHESS.name,
+    icon: '🖖',
+    tagline: '7 tableros, 3 niveles: torres y damas también se mueven en vertical.',
+    status: 'playable',
+    game: TRIDCHESS,
   },
   {
     id: 'ludo',

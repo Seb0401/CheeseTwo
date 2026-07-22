@@ -27,7 +27,7 @@ Para bajar la barrera de entrada antes del 8×8 completo:
 | **Grandes (10×10, 12×12)** | más piezas, builds de enjambre | ⭐⭐ |
 | **Formas raras (cruz, círculo, con huecos)** | rutas y bloqueos no triviales | ⭐⭐ |
 | **Hexagonal (Gliński)** | 6 direcciones, re-piensa cada pieza | ⭐⭐⭐ |
-| **3D (multi-capa)** | movimiento vertical entre planos | ⭐⭐⭐⭐ |
+| **3D (multi-capa)** ✅ | movimiento vertical entre planos | ⭐⭐⭐⭐ |
 | **Multi-jugador (3-4 bandos)** | alianzas, rey compartido, turnos rotados | ⭐⭐⭐⭐ |
 | **Con terreno** | casillas especiales: fuego, portal, muro, +mult | ⭐⭐⭐ |
 
@@ -37,9 +37,15 @@ Para bajar la barrera de entrada antes del 8×8 completo:
 - Cada pieza necesita **redefinir su movimiento** en 6 direcciones. Trabajo de diseño real, pero muy distintivo.
 - Los poderes posicionales (adyacencias, líneas) cambian de sabor.
 
-### 3D (multi-capa)
-- Modelo recomendado para empezar: **N tableros 8×8 apilados** con reglas de movimiento vertical limitadas (no full 3D libre, es ingobernable). Piezas ganan "movimiento entre capas" como poder.
-- Riesgo: legibilidad. Necesita muy buena UI/cámara. Considerar dejarlo para post-MVP.
+### 3D (multi-capa) ✅ implementado — "Ajedrez 3D" (`src/engine/games/tridchess.ts`)
+
+Adaptación del ajedrez tridimensional de Bartmess/Star Fleet Technical Manual (el de Star Trek): 7 tableros en 5 niveles — 3 principales 4×4 apilados (Bottom/Middle/Top) + 4 "Attack Boards" 2×2 en las esquinas —, 64 casillas en total, igual que el ajedrez clásico.
+
+- **Movimiento real en 3D:** torres y damas se deslizan también en el eje vertical; los alfiles ganan diagonales de 3 ejes ("triagonales", cambian file+rank+level a la vez) además de las diagonales planas de cada par de ejes; los caballos saltan combinando cualquier par de ejes, así que pueden cambiar de nivel (incluso saltarse un tablero entero); los peones "suben" a través de los 3 tableros principales como una escalera continua (12 escalones) y coronan al llegar al tablero rival.
+- **Mecánica estrella:** el Middle board arranca vacío — territorio neutral disputado — y aterrizar ahí da un bonus de Presión, empujando a pelear por el centro vertical.
+- **Simplificación deliberada:** los Attack Boards NO se deslizan ni rotan durante el Duelo (a diferencia del juego original) — el motor asume un tablero fijo por Duelo, y soportar tableros móviles habría significado una reescritura grande e incierta. Lo que se mantiene fiel es la posición inicial real y el movimiento en 3D, que es el corazón táctico del juego.
+- **Render:** como el tablero no es una rejilla 8×8, `GameDef.layout` (nuevo, opcional) le dice a `BoardView` dónde dibujar cada casilla — los 3 tableros principales se muestran lado a lado con los Attack Boards en sus esquinas, sin piezas 3D (ver [interfaz](10-interfaz.md)).
+- Riesgo de legibilidad: mitigado dibujando el "mapa desplegado" de los 7 tableros en 2D en vez de una cámara 3D real.
 
 ### Multi-jugador (3-4 bandos)
 - En un run single-player, los otros bandos son rivales IA que también luchan entre sí → política y caos.

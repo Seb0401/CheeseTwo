@@ -110,6 +110,23 @@ export interface PieceInfo {
 }
 
 /**
+ * Cómo dibujar un tablero que NO es la rejilla 8×8 estándar (ej. los 7
+ * tableros/64 casillas del ajedrez 3D). `cellAt` ubica cada `SquareIndex` en
+ * una rejilla de celdas (columna, fila) — puede ser dispersa: no todas las
+ * celdas (col, row) necesitan corresponder a una casilla real. Si un
+ * `GameDef` no define `layout`, el render usa la rejilla 8×8 de siempre.
+ */
+export interface BoardLayout {
+  cols: number;
+  rows: number;
+  /** Número de casillas válidas (== board.length). */
+  count: number;
+  cellAt(sq: SquareIndex): { col: number; row: number };
+  /** Color alterno de la casilla (patrón de tablero). */
+  isDark(sq: SquareIndex): boolean;
+}
+
+/**
  * Definición de un juego jugable como Duelo del roguelike.
  * Añadir un juego = implementar esta interfaz (ver docs/09-otros-juegos.md);
  * el núcleo (duelo, Presión, IA, render) funciona sin cambios.
@@ -123,6 +140,8 @@ export interface GameDef {
   defaults: { target: number; turnLimit: number };
   /** Instrucción de una línea para el HUD. */
   hint: string;
+  /** Disposición de render si el tablero no es la rejilla 8×8 estándar. */
+  layout?: BoardLayout;
 
   createInitialBoard(): Board;
   /** Movimientos pseudo-legales desde `from` (el núcleo filtra turno/estado). */

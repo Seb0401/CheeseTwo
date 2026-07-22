@@ -102,6 +102,7 @@ export function DuelScreen({
       // Damas reutiliza el tipo 'king' para su Dama: le damos su propio emblema.
       emblemKeyFor: (piece) =>
         game.id === 'damas' && piece.type === 'king' ? 'king_damas' : piece.type,
+      layout: game.layout,
     });
     viewRef.current = view;
     let mounted = true;
